@@ -12,14 +12,32 @@ create2_spec = {'wheelbase': 0.235,
 steam_gps_var = [5e-6, 5e-6, 6e-3]
 
 class Create2:
-    def __init__(self, mode='default', L2R_bias=0.9, bias_var = 0.1):
-        if mode == 'default':
-            self.wheelbase = create2_spec['wheelbase']
-            self.wheel_diameter = create2_spec['wheel_diameter']
-            self.body_radius = create2_spec['body_radius']
-            self.wheelbase_offset = create2_spec['wheelbase_offset']
-            self.wheel_velocity_var = create2_spec['wheel_velocity_var']
-            self.steering_var = create2_spec['steering_var']
-            self.abs_min_turning_radius = create2_spec['abs_min_turning_radius']
-            
+    def __init__(self, mode='default', L2R_bias=0.9, bias_var = 0.1, velo_var = 0.05, custom_spec=None):
+        spec = create2_spec if mode=='default' else custom_spec
+        
+        self.wheelbase = spec['wheelbase']
+        self.wheel_diameter = spec['wheel_diameter']
+        self.body_radius = spec['body_radius']
+        self.wheelbase_offset = spec['wheelbase_offset']
+        self.wheel_velocity_var = spec['wheel_velocity_var']
+        self.steering_var = spec['steering_var']
+        self.abs_min_turning_radius = spec['abs_min_turning_radius']
+        
         self.L2R_bias = L2R_bias
+        self.bias_var = bias_var
+        self.velo_var = velo_var
+
+        # Initialize a based velocity factor on each wheel:
+        self.v_left_factor = 1 + np.sqrt(self.velo_var)*np.random.randn()
+        bias = self.L2R_bias + np.sqrt(self.bias_var)*np.random.randn()
+        self.v_right_factor = self.v_left_factor / bias
+
+
+    def reset(self):
+        # Initialize a based velocity factor on each wheel:
+        self.v_left_factor = 1 + np.sqrt(self.velo_var)*np.random.randn()
+        bias = self.L2R_bias + np.sqrt(self.bias_var)*np.random.randn()
+        self.v_right_factor = self.v_left_factor / bias
+
+
+        
