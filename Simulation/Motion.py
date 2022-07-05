@@ -1,3 +1,4 @@
+from turtle import update
 import numpy as np
 import sys
 import warnings
@@ -61,6 +62,11 @@ class Drive:
             self.bot = Setting.Create2
         self.kinematic = np.array([0.0, 0.0]) # v, w
         self.direct = np.array([0.0, 0.0]) # vL, vR
+        self.mode = mode
+
+    def reset(self):
+        self.bot.reset()
+
         
     def update_kinematic(self, new_v, new_w):
         self.kinematic[0] = new_v
@@ -72,29 +78,27 @@ class Drive:
         self.direct[1] = new_vR
 
 
-    def kinematic_to_direct(self):
+    def kinematic_to_direct(self,int=False):
         self.direct[0] = self.kinematic[0] - (self.bot.wheelbase/2) * self.kinematic[1]
         self.direct[1] = self.kinematic[0] - (self.bot.wheelbase/2) * self.kinematic[1]
-        
+        if int:
+            self.direct = np.round(self.direct)
 
     def direct_to_kinematic(self):
         self.kinematic[0] = (self.direct[1] + self.direct[0])/2
         self.kinematic[1] = (self.direct[1] - self.direct[0])/self.bot.wheelbase
 
 
-    #######################################################################
-    # NEXT, LET'S TRY TO INJECT SOME NOISE TO TO THIS DRIVE!         
-    # A good start will be using some sort of loop in inject noise   
-    # during the conversion of direct and kinematic.                
-    # Ideal 1:
-    # -------
-    # The Motion will receive a set v,w (kinematic) from a soon to-be
-    # Control module. Next, it will will try to precess to from v, w
-    # to vL, vR. 
-    # Next, round vL, vR to the closest integer. Add some noise  from wheel
-    # velocity var.
-    # Next steps, use the noisy vL, vR and convert it back to v, w to
-    # find the next pose.
-    # Feed the x,y,yaw (pose) back to the Control module for next action   
-    # 
-    #######################################################################
+    def noisy_direct(self, factors, var):
+        # offset left and right to biasing to one side (depending on the setting)
+        self.direct = factors * self.direct
+        # add gaussian noise
+        self.direct = self.direct + np.sqrt(var) * np.random.randn(2)
+
+    def kinematic_update(self, new_kinematic):
+        self.update_kinematic(new_kinematic[0], new_kinematic[1])
+        self.kinematic_to_direct(int=True)
+        # ADD NOISE TO WHEEL VELOCITIES
+        self.noisy_direct(factors = np.array([self.bot.v_left_factor, self.bot.v_right_factor]),
+                          var = self.bot.wheel_velocity_var)
+        self.direct_to_kinematic(self)
