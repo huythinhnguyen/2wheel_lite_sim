@@ -1,4 +1,3 @@
-from turtle import update
 import numpy as np
 import sys
 import warnings
@@ -56,6 +55,24 @@ class State:
         self.pose = new_pose.reshape(3,)
 
 
+class GPS:
+    def __init__(self, var=Setting.steam_gps_var, pose=None):
+        self.var = np.array(var)
+        self.pose = np.array([0.0, 0.0, 0.0]) if pose==None else pose
+        self.pose_hat = pose + np.sqrt(self.var)*np.random.randn(3)
+        self.init_pose = np.copy(self.pose)
+    
+    def reset(self,pose = None):
+        self.pose = np.copy(self.init_pose) if pose==None else pose
+        self.pose_hat = pose + np.sqrt(self.var)*np.random.randn(3)
+        self.init_pose = np.copy(self.pose)
+
+
+    def update(self,pose):
+        self.pose = pose
+        self.pose_hat = pose + np.sqrt(self.var)*np.random.randn(3)
+
+
 class Drive:
     def __init__(self, mode='create2'):
         if mode=='create2':
@@ -84,6 +101,7 @@ class Drive:
         if int:
             self.direct = np.round(self.direct)
 
+
     def direct_to_kinematic(self):
         self.kinematic[0] = (self.direct[1] + self.direct[0])/2
         self.kinematic[1] = (self.direct[1] - self.direct[0])/self.bot.wheelbase
@@ -94,6 +112,7 @@ class Drive:
         self.direct = factors * self.direct
         # add gaussian noise
         self.direct = self.direct + np.sqrt(var) * np.random.randn(2)
+
 
     def kinematic_update(self, new_kinematic):
         self.update_kinematic(new_kinematic[0], new_kinematic[1])
