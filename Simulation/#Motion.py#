@@ -95,14 +95,11 @@ class Drive:
         self.direct[1] = new_vR
 
 
-    def kinematic_to_direct(self,int=False, wrapping=True):
+    def kinematic_to_direct(self,int=False):
         self.direct[0] = self.kinematic[0] - (self.bot.wheelbase/2) * self.kinematic[1]
         self.direct[1] = self.kinematic[0] - (self.bot.wheelbase/2) * self.kinematic[1]
         if int:
-            self.direct = np.round(self.direct,3)
-        self.direct[ np.argwhere(abs(self.direct))<11 ] = 0
-        if wrapping:
-            self.direct = np.clip(self.direct, self)
+            self.direct = np.round(self.direct)
 
 
     def direct_to_kinematic(self):

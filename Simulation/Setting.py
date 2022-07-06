@@ -2,6 +2,7 @@ import numpy as np
 
 create2_spec = {'wheelbase': 0.235,
            'wheel_velocity_range': [-0.5,0.5], # m/s, [min max]
+           'min_wheel_speed': 0.011,
            'wheel_diameter': 0.072,
            'body_radius': 0.175,
            'wheelbase_offset': 0.0,
