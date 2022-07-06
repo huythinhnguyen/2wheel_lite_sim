@@ -17,6 +17,7 @@ class Create2:
         spec = create2_spec if mode=='default' else custom_spec
         
         self.wheelbase = spec['wheelbase']
+        self.wheel_velocity_range = spec['wheel_velocity_range']
         self.wheel_diameter = spec['wheel_diameter']
         self.min_wheel_speed = spec['min_wheel_speed']
         self.body_radius = spec['body_radius']
@@ -35,7 +36,7 @@ class Create2:
         self.v_left_factor = 1 + np.sqrt(self.velo_var)*np.random.randn()
         bias = self.L2R_bias + np.sqrt(self.bias_var)*np.random.randn()
         self.v_right_factor = self.v_left_factor / bias
-        self.heading_offset = self.heading_offset + np.sqrt(self.heading_offset_var)*np.random.randn()
+        self.heading_offset = self.heading_offset_mean + np.sqrt(self.heading_offset_var)*np.random.randn()
 
 
     def reset(self):

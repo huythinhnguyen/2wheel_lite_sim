@@ -1,20 +1,32 @@
 import numpy as np
 import sys
 import warnings
-import Setting
+from . import Setting
 
 
 class State:
     def __init__(self, pose:'[x, y, yaw] (meter)'=None, kinematic:'[v (m/s), w(rad/s)]'=None, dt=0.5):
-        self.pose = np.array([0.0, 0.0, 0.0]) if pose == None else np.array(pose)
-        self.kinematic = np.array([0.0, 0.0]) if kinematic==None else np.array(kinematic)
+        if type(pose)==np.ndarray:
+            self.pose = pose.reshape(3,)
+        else:
+            self.pose = np.array([0.0, 0.0, 0.0]) if pose == None else np.array(pose)
+        if type(kinematic)==np.ndarray:
+            self.kinematic = kinematic.reshape(2,)
+        else:
+            self.kinematic = np.array([0.0, 0.0]) if kinematic==None else np.array(kinematic)
         self._init_state = np.concatenate((self.pose, self.kinematic))
         self.dt = dt
 
 
-    def reset(self, pose:'[x, y, yaw] (meter)', kinematic:'[v (m/s), w(rad/s)]'):
-        self.pose = self._init_state[:3] if pose == None else np.array(pose)
-        self.kinematic = self._init_state[3:] if kinematic ==  None else np.array(kinematic)
+    def reset(self, pose:'[x, y, yaw] (meter)'=None, kinematic:'[v (m/s), w(rad/s)]'=None):
+        if type(pose)==np.ndarray:
+            self.pose = pose.reshape(3,)
+        else:
+            self.pose = self._init_state[:3] if pose == None else np.array(pose)
+        if type(kinematic)==np.ndarray:
+            self.kinematic = kinematic.reshape(2,)
+        else:
+            self.kinematic = self._init_state[3:] if kinematic ==  None else np.array(kinematic)
         self._init_state = np.concatenate((self.pose, self.kinematic))
 
 
@@ -39,7 +51,7 @@ class State:
     def update_pose(self):
         x, y, yaw = self.pose
         v,w = self.kinematic
-        ICC = self.ICC
+        ICC = self.ICC()
         if ICC != None:
             turn = w*self.dt
             Rotation = np.array( [[ np.cos(turn), -np.sin(turn), 0.0 ],
@@ -58,12 +70,16 @@ class State:
 class GPS:
     def __init__(self, var=Setting.steam_gps_var, pose=None):
         self.var = np.array(var)
-        self.pose = np.array([0.0, 0.0, 0.0]) if pose==None else pose
+        if type(pose)==np.ndarray:
+            self.pose = pose.reshape(3,)
+        else:
+            self.pose = np.array([0.0, 0.0, 0.0]) if pose==None else np.array(pose)
         self.pose_hat = pose + np.sqrt(self.var)*np.random.randn(3)
         self.init_pose = np.copy(self.pose)
     
+
     def reset(self,pose = None):
-        self.pose = np.copy(self.init_pose) if pose==None else pose
+        self.pose = np.copy(self.init_pose) if pose==None else np.array(pose)
         self.pose_hat = pose + np.sqrt(self.var)*np.random.randn(3)
         self.init_pose = np.copy(self.pose)
 
@@ -76,10 +92,11 @@ class GPS:
 class Drive:
     def __init__(self, mode='create2'):
         if mode=='create2':
-            self.bot = Setting.Create2
+            self.bot = Setting.Create2()
         self.kinematic = np.array([0.0, 0.0]) # v, w
         self.direct = np.array([0.0, 0.0]) # vL, vR
         self.mode = mode
+
 
     def reset(self):
         self.bot.reset()
@@ -100,9 +117,9 @@ class Drive:
         self.direct[1] = self.kinematic[0] - (self.bot.wheelbase/2) * self.kinematic[1]
         if int:
             self.direct = np.round(self.direct,3)
-        self.direct[ np.argwhere(abs(self.direct))<0.011 ] = 0
+        self.direct[ np.argwhere(abs(self.direct)<0.011)] = 0
         if wrapping:
-            self.direct = np.clip(self.direct, self)
+            self.direct = np.clip(self.direct, self.bot.wheel_velocity_range[0], self.bot.wheel_velocity_range[1])
 
 
     def direct_to_kinematic(self):
@@ -123,4 +140,4 @@ class Drive:
         # ADD NOISE TO WHEEL VELOCITIES
         self.noisy_direct(factors = np.array([self.bot.v_left_factor, self.bot.v_right_factor]),
                           var = self.bot.wheel_velocity_var)
-        self.direct_to_kinematic(self)
+        self.direct_to_kinematic()
