@@ -18,6 +18,7 @@ class Create2:
         
         self.wheelbase = spec['wheelbase']
         self.wheel_diameter = spec['wheel_diameter']
+        self.min_wheel_speed = spec['min_wheel_speed']
         self.body_radius = spec['body_radius']
         self.wheelbase_offset = spec['wheelbase_offset']
         self.wheel_velocity_var = spec['wheel_velocity_var']

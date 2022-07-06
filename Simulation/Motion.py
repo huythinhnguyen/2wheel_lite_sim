@@ -100,7 +100,7 @@ class Drive:
         self.direct[1] = self.kinematic[0] - (self.bot.wheelbase/2) * self.kinematic[1]
         if int:
             self.direct = np.round(self.direct,3)
-        self.direct[ np.argwhere(abs(self.direct))<11 ] = 0
+        self.direct[ np.argwhere(abs(self.direct))<0.011 ] = 0
         if wrapping:
             self.direct = np.clip(self.direct, self)
 
