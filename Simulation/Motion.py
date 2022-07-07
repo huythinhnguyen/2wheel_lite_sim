@@ -94,9 +94,13 @@ class GPS:
 
 
 class Drive:
-    def __init__(self, mode='create2'):
+    def __init__(self, mode='create2',custom=False,custom_spec=None):
+        if custom:
+            bot_mode = 'custom'
+            if custom_spec == None:
+                raise ValueError('custom_spec can not be empty')
         if mode=='create2':
-            self.bot = Setting.Create2()
+            self.bot = Setting.Create2(mode=bot_mode, custom_spec=custom_spec)
         self.kinematic = np.array([0.0, 0.0]) # v, w
         self.direct = np.array([0.0, 0.0]) # vL, vR
         self.mode = mode
