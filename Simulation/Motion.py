@@ -43,9 +43,13 @@ class State:
 
     def ICC(self):
         x, y, yaw = self.pose
-        R = self.turning_radius
-        if R != 'inf': return [x - R*np.sin(yaw), y + R*np.cos(yaw)]
-        else: return None
+        R = self.turning_radius()
+        if R != 'inf': 
+            Cx = x - R*np.sin(yaw)
+            Cy = y + R*np.cos(yaw)
+            return [Cx, Cy]
+        else: 
+            return None
 
 
     def update_pose(self):

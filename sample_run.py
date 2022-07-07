@@ -10,7 +10,6 @@ desired_kinematics = np.array([]).reshape(0,2)
 kinematics = np.array([]).reshape(0,2)
 state = State()
 drive = Drive()
-print(drive.bot.__dict__)
 c = NaiveSquare(init_pose = state.pose, width=1)
 i = 0
 while not c._run_ended:
