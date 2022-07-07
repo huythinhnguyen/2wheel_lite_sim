@@ -37,7 +37,7 @@ class State:
 
     
     def turning_radius(self):
-        if np.abs(self.w) < 0.001: return self.v/self.w
+        if np.abs(self.kinematic[1]) < 0.001: return self.kinematic[0]/self.kinematic[1]
         else: return 'inf'
 
 
