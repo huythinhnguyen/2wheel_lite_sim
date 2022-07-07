@@ -4,6 +4,14 @@ import warnings
 from . import Setting
 
 
+def wrap_to_pi(a):
+    if a > np.pi:
+        a -= 2*np.pi
+    elif a < -np.pi:
+        a += 2*np.pi
+    return a
+
+
 class State:
     def __init__(self, pose:'[x, y, yaw] (meter)'=None, kinematic:'[v (m/s), w(rad/s)]'=None, dt=0.5):
         if type(pose)==np.ndarray:
@@ -66,9 +74,10 @@ class State:
             new_pose = np.matmul( Rotation,self.pose.reshape(3,1) + translation) + inverse_translation
         else:
             move = v*self.dt
-            translation = np.array([np.cos(yaw), np.sin(yaw), 0.0])
+            translation = move*np.array([np.cos(yaw), np.sin(yaw), 0.0])
             new_pose = self.pose + translation
         self.pose = new_pose.reshape(3,)
+        self.pose[2] = wrap_to_pi(self.pose[2])
 
 
 class GPS:
@@ -79,18 +88,21 @@ class GPS:
         else:
             self.pose = np.array([0.0, 0.0, 0.0]) if pose==None else np.array(pose)
         self.pose_hat = pose + np.sqrt(self.var)*np.random.randn(3)
+        self.pose_hat[2] = wrap_to_pi(self.pose_hat[2])
         self.init_pose = np.copy(self.pose)
     
 
     def reset(self,pose = None):
         self.pose = np.copy(self.init_pose) if pose==None else np.array(pose)
         self.pose_hat = pose + np.sqrt(self.var)*np.random.randn(3)
+        self.pose_hat[2] = wrap_to_pi(self.pose_hat[2])
         self.init_pose = np.copy(self.pose)
 
 
     def update(self,pose):
         self.pose = pose
         self.pose_hat = pose + np.sqrt(self.var)*np.random.randn(3)
+        self.pose_hat[2] = wrap_to_pi(self.pose_hat[2])
 
 
 class Drive:
