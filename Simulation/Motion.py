@@ -38,7 +38,10 @@ class State:
         self._init_state = np.concatenate((self.pose, self.kinematic))
 
 
-    def update_kinematic(self, new_v:'m/s'=None, new_w:'rad/s'=None):
+    def update_kinematic(self, kinematic:'[v, w]'=[], new_v:'m/s'=None, new_w:'rad/s'=None):
+        if len(kinematic)>1:
+            self.kinematic = kinematic if type(kinematic)==np.ndarray else np.array(kinematic)
+            return self.kinematic
         if new_v!=None: self.kinematic[0] = new_v
         if new_w!=None: self.kinematic[1] = new_w
         # Maybe add a acceleration limitter here
@@ -157,7 +160,7 @@ class Drive:
 
     def kinematic_update(self, new_kinematic):
         self.update_kinematic(new_kinematic[0], new_kinematic[1])
-        self.kinematic_to_direct(int=True)
+        self.kinematic_to_direct(int=False,wrapping=False)
         # ADD NOISE TO WHEEL VELOCITIES
         self.noisy_direct(factors = np.array([self.bot.v_left_factor, self.bot.v_right_factor]),
                           var = self.bot.wheel_velocity_var)
