@@ -1,6 +1,7 @@
 ### 07/19/22
 Issues:
-
+- Removed noise from from in Drive but the Drive class still did not track pose accurately.
+- Linear velo is about 0.87 of actual. Angular velo is shifted toward the negatives
 Fixed:
 - rotation around ICC works well!
 - Motion.State work wonderfully!
