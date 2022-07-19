@@ -3,6 +3,7 @@ Issues:
 
 Fixed:
 - rotation around ICC works well!
+- Motion.State work wonderfully!
 
 ### 07/05/22
 Issues:
