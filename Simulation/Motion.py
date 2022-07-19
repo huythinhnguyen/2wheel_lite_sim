@@ -45,14 +45,14 @@ class State:
 
     
     def turning_radius(self):
-        if np.abs(self.kinematic[1]) < 0.001: return self.kinematic[0]/self.kinematic[1]
+        if np.abs(self.kinematic[1]) > 0.001: return self.kinematic[0]/self.kinematic[1]
         else: return 'inf'
 
 
     def ICC(self):
         x, y, yaw = self.pose
         R = self.turning_radius()
-        if R != 'inf': 
+        if R != 'inf':
             Cx = x - R*np.sin(yaw)
             Cy = y + R*np.cos(yaw)
             return [Cx, Cy]
@@ -72,7 +72,8 @@ class State:
             translation = -1*np.array([*ICC,0]).reshape(3,1)
             inverse_translation = np.array([*ICC, turn]).reshape(3,1)
             new_pose = np.matmul( Rotation,self.pose.reshape(3,1) + translation) + inverse_translation
-        else:
+            new_pose[2,0] = self.pose[2] + turn
+        else :
             move = v*self.dt
             translation = move*np.array([np.cos(yaw), np.sin(yaw), 0.0])
             new_pose = self.pose + translation

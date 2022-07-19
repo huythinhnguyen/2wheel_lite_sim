@@ -1,3 +1,9 @@
+### 07/19/22
+Issues:
+
+Fixed:
+- rotation around ICC works well!
+
 ### 07/05/22
 Issues:
 - ToyController was too complicated for testing.
