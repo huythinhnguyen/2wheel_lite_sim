@@ -7,7 +7,7 @@ create2_spec = {'wheelbase': 0.235,
                 'body_radius': 0.175,
                 'wheelbase_offset': 0.0,
                 'wheel_velocity_var': 1e-4, # variance of wheel_velocity from the expected setting. system is relatively OK with 1e-5 to 1e-6
-                'steering_var': 0.001, # not yet implemented
+                #'steering_var': 0.001, # NOT VERY USEFUL.
                 'abs_min_turning_radius': 0.02,
                 'L2R_bias_mean': 1.0,
                 'L2R_bias_var': 1e-3, # aggressive but not extreme. 1e-1 is very extreme and 1e-6 is pretty stable.
@@ -30,7 +30,7 @@ class Create2:
         self.body_radius = spec['body_radius']
         self.wheelbase_offset = spec['wheelbase_offset']
         self.wheel_velocity_var = spec['wheel_velocity_var'] if noise else 0.0
-        self.steering_var = spec['steering_var'] if noise else 0.0
+        #self.steering_var = spec['steering_var'] if noise else 0.0
         self.abs_min_turning_radius = spec['abs_min_turning_radius']
         
         self.L2R_bias_mean = spec['L2R_bias_mean'] if noise else 1.0
