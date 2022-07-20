@@ -1,3 +1,9 @@
+### 07/20/22
+Issues:
+- The noise generation code does not reflect the spec setting. --> Need fix.
+Fixes:
+- Removed all the noise-generator code from Motion.Drive --> work perfectly
+
 ### 07/19/22
 Issues:
 - Removed noise from from in Drive but the Drive class still did not track pose accurately.
