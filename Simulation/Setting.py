@@ -6,14 +6,14 @@ create2_spec = {'wheelbase': 0.235,
                 'wheel_diameter': 0.072,
                 'body_radius': 0.175,
                 'wheelbase_offset': 0.0,
-                'wheel_velocity_var': 0.01,
-                'steering_var': 0.004,
+                'wheel_velocity_var': 1e-4, # variance of wheel_velocity from the expected setting. system is relatively OK with 1e-5 to 1e-6
+                'steering_var': 0.001, # not yet implemented
                 'abs_min_turning_radius': 0.02,
-                'L2R_bias_mean': 1.1,
-                'L2R_bias_var': 0.1,
-                'velo_var': 0.05,
-                'heading_offset_mean': np.pi/60,
-                'heading_offset_var': np.pi/80
+                'L2R_bias_mean': 1.0,
+                'L2R_bias_var': 1e-3, # aggressive but not extreme. 1e-1 is very extreme and 1e-6 is pretty stable.
+                'velo_var': 1e-3, # make both wheel go a bit faster or slower. affect the turn more than going straight. Aiming to simulate different road surface resistance.
+                'heading_offset_mean': 0.0, # not yet implemented
+                'heading_offset_var': 0.0 # not yet implemeted
                 }
 
 

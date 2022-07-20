@@ -1,9 +1,9 @@
 ### 07/20/22
 Issues:
-- The bad tracking when noise added might be just a feature to reflect the noise.
-- However, I should work through the list of noise individually to test whether they make sense
+- Need to implement steering_var and heading_offset (un-used spec in Setting) --> Inmplement in Motion!!
 Fixes:
 - Motion.Drive track correctly without noise. When added noise, tracking is terrible. (Feature/Bug???)
+- Tuned all the variance for create2 in Setting
 ### 07/19/22
 Issues:
 - Removed noise from from in Drive but the Drive class still did not track pose accurately.
