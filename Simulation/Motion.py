@@ -110,13 +110,16 @@ class GPS:
 
 
 class Drive:
-    def __init__(self, mode='create2',custom=False,custom_spec=None):
+    def __init__(self, mode='create2',custom=False,custom_spec=None, noise=True):
         if custom:
             bot_mode = 'custom'
             if custom_spec == None:
                 raise ValueError('custom_spec can not be empty')
-        if mode=='create2':
-            self.bot = Setting.Create2(mode=bot_mode, custom_spec=custom_spec)
+        if mode!='create2':
+            bot_mode = mode
+            self.bot = Setting.Create2(mode=bot_mode, custom_spec=custom_spec, noise=noise)
+        else:
+            self.bot = Setting.Create2(noise=noise)
         self.kinematic = np.array([0.0, 0.0]) # v, w
         self.direct = np.array([0.0, 0.0]) # vL, vR
         self.mode = mode
@@ -139,11 +142,11 @@ class Drive:
     def kinematic_to_direct(self,int=False, wrapping=True):
         self.direct[0] = self.kinematic[0] - (self.bot.wheelbase/2) * self.kinematic[1]
         self.direct[1] = self.kinematic[0] + (self.bot.wheelbase/2) * self.kinematic[1]
-        #if int:
-        #    self.direct = np.round(self.direct,3)
-        #self.direct[ np.argwhere(abs(self.direct)<self.bot.min_wheel_speed)] = 0
-        #if wrapping:
-        #    self.direct = np.clip(self.direct, self.bot.wheel_velocity_range[0], self.bot.wheel_velocity_range[1])
+        if int:
+            self.direct = np.round(self.direct,3)
+        self.direct[ np.argwhere(abs(self.direct)<self.bot.min_wheel_speed)] = 0
+        if wrapping:
+            self.direct = np.clip(self.direct, self.bot.wheel_velocity_range[0], self.bot.wheel_velocity_range[1])
 
 
     def direct_to_kinematic(self):
@@ -157,11 +160,11 @@ class Drive:
         # add gaussian noise
         self.direct = self.direct + np.sqrt(var) * np.random.randn(2)
 
-
+        
     def kinematic_update(self, new_kinematic):
         self.update_kinematic(new_kinematic[0], new_kinematic[1])
-        self.kinematic_to_direct(int=False,wrapping=False)
+        self.kinematic_to_direct(int=True)
         # ADD NOISE TO WHEEL VELOCITIES
-        #self.noisy_direct(factors = np.array([self.bot.v_left_factor, self.bot.v_right_factor]),
-        #                  var = self.bot.wheel_velocity_var)
+        self.noisy_direct(factors = np.array([self.bot.v_left_factor, self.bot.v_right_factor]),
+                          var = self.bot.wheel_velocity_var)
         self.direct_to_kinematic()

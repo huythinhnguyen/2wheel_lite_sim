@@ -1,9 +1,9 @@
 ### 07/20/22
 Issues:
-- The noise generation code does not reflect the spec setting. --> Need fix.
+- The bad tracking when noise added might be just a feature to reflect the noise.
+- However, I should work through the list of noise individually to test whether they make sense
 Fixes:
-- Removed all the noise-generator code from Motion.Drive --> work perfectly
-
+- Motion.Drive track correctly without noise. When added noise, tracking is terrible. (Feature/Bug???)
 ### 07/19/22
 Issues:
 - Removed noise from from in Drive but the Drive class still did not track pose accurately.
