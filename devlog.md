@@ -1,7 +1,9 @@
 ### 07/20/22
 Issues:
-- Need to implement steering_var and heading_offset (un-used spec in Setting) --> Inmplement in Motion!!
+- Need to implement some way to do animation. Some sample Controller --> passion project.
+- Starting to rebuild this for echo_gym simulation.
 Fixes:
+- Everything in Motion worked and tested. GPS won't be used for regular sim unless for demoing some other algorithm.
 - Motion.Drive track correctly without noise. When added noise, tracking is terrible. (Feature/Bug???)
 - Tuned all the variance for create2 in Setting
 ### 07/19/22

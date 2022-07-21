@@ -13,7 +13,7 @@ create2_spec = {'wheelbase': 0.235,
                 'L2R_bias_var': 1e-3, # aggressive but not extreme. 1e-1 is very extreme and 1e-6 is pretty stable.
                 'velo_var': 1e-3, # make both wheel go a bit faster or slower. affect the turn more than going straight. Aiming to simulate different road surface resistance.
                 'heading_offset_mean': 0.0, # not yet implemented
-                'heading_offset_var': 0.0 # not yet implemeted
+                'heading_offset_var': np.pi/36 # not yet implemeted
                 }
 
 

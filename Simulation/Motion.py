@@ -15,7 +15,7 @@ def wrap_to_pi(a):
 
 
 class State:
-    def __init__(self, pose:'[x, y, yaw] (meter)'=None, kinematic:'[v (m/s), w(rad/s)]'=None, dt=0.5, noise=True, **kwarg):
+    def __init__(self, pose:'[x, y, yaw] (meter)'=None, kinematic:'[v (m/s), w(rad/s)]'=None, dt=0.5):
         if type(pose)==np.ndarray:
             self.pose = pose.reshape(3,)
         else:
@@ -87,18 +87,18 @@ class State:
 
 
 class GPS:
-    def __init__(self, var=Setting.steam_gps_var, pose=None, offset=True, **kwarg):
+    def __init__(self, var=Setting.steam_gps_var, pose=None, offset=True, noise=True, **kwarg):
         self.var = np.array(var)
         if type(pose)==np.ndarray:
             self.pose = pose.reshape(3,)
         else:
             self.pose = np.array([0.0, 0.0, 0.0]) if pose==None else np.array(pose)
-        self.pose_hat = pose + np.sqrt(self.var)*np.random.randn(3)
+        self.pose_hat = self.pose + np.sqrt(self.var)*np.random.randn(3)
         self.pose_hat[2] = wrap_to_pi(self.pose_hat[2])
         self.init_pose = np.copy(self.pose)
         if offset:
             if len(kwarg)>0:
-                self.bot = Setting.Create2(mode=kwarg['mode'], custom_spec = kwargp['custom_spec'], noise=noise)
+                self.bot = Setting.Create2(mode=kwarg['mode'], custom_spec = kwarg['custom_spec'], noise=noise)
             else:
                 self.bot = Setting.Create2(mode=DEFAULT_BOT, noise=noise)
         self.offset = offset
@@ -106,7 +106,7 @@ class GPS:
 
     def reset(self,pose = None):
         self.pose = np.copy(self.init_pose) if pose==None else np.array(pose)
-        self.pose_hat = pose + np.sqrt(self.var)*np.random.randn(3)
+        self.pose_hat = self.pose + np.sqrt(self.var)*np.random.randn(3)
         self.pose_hat[2] = wrap_to_pi(self.pose_hat[2])
         self.init_pose = np.copy(self.pose)
         if self.offset:
@@ -130,14 +130,10 @@ class Drive:
         self.kinematic = np.array([0.0, 0.0]) # v, w
         self.direct = np.array([0.0, 0.0]) # vL, vR
         self.mode = mode
-        HEADING_OFFSET = self.bot.heading_offset
-        STEERING_VAR   = self.bot.steering_var
 
-
+        
     def reset(self):
         self.bot.reset()
-        HEADING_OFFSET = self.bot.heading_offset
-        STEERING_VAR   = self.bot.steering_var
 
         
     def update_kinematic(self, new_v, new_w):
