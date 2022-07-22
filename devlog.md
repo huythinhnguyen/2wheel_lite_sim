@@ -1,3 +1,8 @@
+### 07/22/22:
+- Tested ControlDubinsPath --> WORK!
+- Implemented the Dubins Path Planner
+- Maybe work on Animations next
+
 ### 07/20/22
 Issues:
 - Need to implement some way to do animation. Some sample Controller --> passion project.
