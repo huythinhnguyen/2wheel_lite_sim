@@ -123,27 +123,29 @@ def _LSR(start_pose, goal_pose, min_turn_radius):
     C1 = start_pose[:2] + r*np.array([cos(start_pose[2]+pi/2),sin(start_pose[2]+pi/2)])
     C2 = goal_pose[:2] + r*np.array([cos(goal_pose[2]-pi/2), sin(goal_pose[2]-pi/2)])
     yaw_C2C1 = atan2(C2[1]-C1[1], C2[0]-C1[0])
+    if 2*r < hypot(C2[1]-C1[1], C2[0]-C1[0]):
+        alpha = acos(2*r/ hypot(C2[1]-C1[1], C2[0]-C1[0]))
+        A = C1 + r*np.array([cos(yaw_C2C1 - alpha), sin(yaw_C2C1 - alpha)])
+        B = C2 + r*np.array([cos(yaw_C2C1 - alpha + pi), sin(yaw_C2C1 +  - alpha + pi)])
+        A_pose = np.append(A, wrap_to_pi(yaw_C2C1 - alpha + pi/2))
+        B_pose = np.append(B, wrap_to_pi(yaw_C2C1 - alpha + pi/2))
     
-    alpha = acos(2*r/ hypot(C2[1]-C1[1], C2[0]-C1[0]))
+        theta1 = abs(wrap_to_pi(A_pose[2]-start_pose[2]))
+        theta1 = 2*pi - theta1 if wrap_to_pi(A_pose[2]-start_pose[2]) < 0 else theta1
+        #theta2 = 0.0
+        theta3 =  abs(wrap_to_pi(goal_pose[2]-B_pose[2]))
+        theta3 = 2*pi - theta3 if wrap_to_pi(goal_pose[2]-B_pose[2]) > 0 else theta3
+        
+        d1 = theta1*r
+        d2 = hypot(B[1]-A[1], B[0]-A[0])
+        d3 = theta3*r
     
-    A = C1 + r*np.array([cos(yaw_C2C1 - alpha), sin(yaw_C2C1 - alpha)])
-    B = C2 + r*np.array([cos(yaw_C2C1 - alpha + pi), sin(yaw_C2C1 +  - alpha + pi)])
-    A_pose = np.append(A, wrap_to_pi(yaw_C2C1 - alpha + pi/2))
-    B_pose = np.append(B, wrap_to_pi(yaw_C2C1 - alpha + pi/2))
+        inter_poses = {'A': A_pose, 'B': B_pose}
+        distances = [d1,d2,d3]
+    else:
+        inter_poses = None
+        distances = [float('inf'), 0, 0]
     
-    
-    theta1 = abs(wrap_to_pi(A_pose[2]-start_pose[2]))
-    theta1 = 2*pi - theta1 if wrap_to_pi(A_pose[2]-start_pose[2]) < 0 else theta1
-    #theta2 = 0.0
-    theta3 =  abs(wrap_to_pi(goal_pose[2]-B_pose[2]))
-    theta3 = 2*pi - theta3 if wrap_to_pi(goal_pose[2]-B_pose[2]) > 0 else theta3
-    
-    d1 = theta1*r
-    d2 = hypot(B[1]-A[1], B[0]-A[0])
-    d3 = theta3*r
-    
-    inter_poses = {'A': A_pose, 'B': B_pose}
-    distances = [d1,d2,d3]
     
     return inter_poses, distances, modes, 
 
@@ -154,27 +156,30 @@ def _RSL(start_pose, goal_pose, min_turn_radius):
     C1 = start_pose[:2] + r*np.array([cos(start_pose[2]-pi/2),sin(start_pose[2]-pi/2)])
     C2 = goal_pose[:2] + r*np.array([cos(goal_pose[2]+pi/2), sin(goal_pose[2]+pi/2)])
     yaw_C2C1 = atan2(C2[1]-C1[1], C2[0]-C1[0])
+    if 2*r < hypot(C2[1]-C1[1], C2[0]-C1[0]):
+        alpha = acos(2*r/ hypot(C2[1]-C1[1], C2[0]-C1[0]))
     
-    alpha = acos(2*r/ hypot(C2[1]-C1[1], C2[0]-C1[0]))
-    
-    A = C1 + r*np.array([cos(yaw_C2C1 + alpha), sin(yaw_C2C1 + alpha)])
-    B = C2 + r*np.array([cos(yaw_C2C1 + alpha - pi), sin(yaw_C2C1 + alpha - pi)])
-    A_pose = np.append(A, wrap_to_pi(yaw_C2C1 + alpha - pi/2))
-    B_pose = np.append(B, wrap_to_pi(yaw_C2C1 + alpha - pi/2))
+        A = C1 + r*np.array([cos(yaw_C2C1 + alpha), sin(yaw_C2C1 + alpha)])
+        B = C2 + r*np.array([cos(yaw_C2C1 + alpha - pi), sin(yaw_C2C1 + alpha - pi)])
+        A_pose = np.append(A, wrap_to_pi(yaw_C2C1 + alpha - pi/2))
+        B_pose = np.append(B, wrap_to_pi(yaw_C2C1 + alpha - pi/2))
     
     
-    theta1 = abs(wrap_to_pi(A_pose[2]-start_pose[2]))
-    theta1 = 2*pi - theta1 if wrap_to_pi(A_pose[2]-start_pose[2]) > 0 else theta1
-    #theta2 = 0.0
-    theta3 =  abs(wrap_to_pi(goal_pose[2]-B_pose[2]))
-    theta3 = 2*pi - theta3 if wrap_to_pi(goal_pose[2]-B_pose[2]) < 0 else theta3
+        theta1 = abs(wrap_to_pi(A_pose[2]-start_pose[2]))
+        theta1 = 2*pi - theta1 if wrap_to_pi(A_pose[2]-start_pose[2]) > 0 else theta1
+        #theta2 = 0.0
+        theta3 =  abs(wrap_to_pi(goal_pose[2]-B_pose[2]))
+        theta3 = 2*pi - theta3 if wrap_to_pi(goal_pose[2]-B_pose[2]) < 0 else theta3
     
-    d1 = theta1*r
-    d2 = hypot(B[1]-A[1], B[0]-A[0])
-    d3 = theta3*r
+        d1 = theta1*r
+        d2 = hypot(B[1]-A[1], B[0]-A[0])
+        d3 = theta3*r
     
-    inter_poses = {'A': A_pose, 'B': B_pose}
-    distances = [d1,d2,d3]
+        inter_poses = {'A': A_pose, 'B': B_pose}
+        distances = [d1,d2,d3]
+    else:
+        inter_poses = None
+        distances = [float('inf'), 0, 0]
     
     return inter_poses, distances, modes, 
 
