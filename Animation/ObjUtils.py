@@ -27,7 +27,7 @@ class Agent:
         xr = ax.get_xlim()[1] - ax.get_xlim()[0] + 1
         yr = ax.get_ylim()[1] - ax.get_ylim()[0] + 1
         scatter_scale = ax.get_window_extent().width/(max(xr,yr)**2)
-        ax.scatter(poses[:,0], poses[:,1], s=20*scatter_scale, alpha=self.arrow_alpha)
+        ax.scatter(poses[:,0], poses[:,1], s=20*scatter_scale, alpha=self.arrow_alpha, color=self.dot_color)
         return ax
 
 
@@ -35,9 +35,9 @@ class Agent:
         if poses.shape[1]!=3:
             poses.reshape(-1,3)
         if mode=='plot' or mode=='p':
-            ax.plot(poses[:,0], poses[:,1], linewidth=self.course_size*10, alpha=self.course_alpha)
+            ax.plot(poses[:,0], poses[:,1], linewidth=self.course_size*10, alpha=self.course_alpha, color=self.course_color)
         elif mode=='scatter' or mode=='s':
-            ax.scatter(poses[:,0], poses[:,1], s=self.course_size, alpha=self.course_alpha)
+            ax.scatter(poses[:,0], poses[:,1], s=self.course_size, alpha=self.course_alpha, color=self.course_color)
         else:
             raise ValueError('mode need to be either scatter or plot')
         ax.set_aspect('equal')
@@ -47,7 +47,7 @@ class Agent:
 class Food:
     def __init__(self):
         self.food_color = 'tomato'
-        self.food_width = 0.2
+        self.food_width = 0.4
         self.food_alpha = 0.8
 
 
@@ -56,12 +56,13 @@ class Food:
             foods = foods[:,:2]
         for i in range(foods.shape[0]):
             ax.add_artist(plt.Circle(foods[i],self.food_width, alpha=self.food_alpha))
-
+            return ax
+            
 
 class Plant:
     def __init__(self):
         self.leave_shape = 'v^<>v^<>'
-        self.leave_density = 3
+        self.leave_density = 2
         self.leave_alpha = 0.7
         self.leave_color = 'tab:green'
         self.leave_size = 50
@@ -71,14 +72,18 @@ class Plant:
     def plot(self, ax, plants):
         if plants.shape[1] == 3:
             plants = plants[:,:2]
-        ax.scatter(plants[:,0], plants[:,1], s=1, marker=',', linewidths=0.0, alpha=self.leave_alpha, c=self.leave_color)
+        ax.scatter(plants[:,0], plants[:,1],
+                   s=1, marker=',',
+                   linewidths=0.0, alpha=self.leave_alpha, c=self.leave_color)
         ax.set_aspect('equal')
         xr = ax.get_xlim()[1] - ax.get_xlim()[0] + 1
         yr = ax.get_ylim()[1] - ax.get_ylim()[0] + 1
         scatter_scale = ax.get_window_extent().width/(max(xr,yr)**2)
         for _ in range(self.leave_density):
             for i in range(len(self.leave_shape)):
-                ww = plants + (2*self.plant_width*np.random.rand(plants.shape[0],2)-self.plant_width)
-                ax.scatter(ww[:,0], ww[:,1], s=scatter_scale*self.leave_size, marker=self.leave_shape[i], linewidths=0.0, alpha=self.leave_alpha, c=self.leave_color)
-                
+                ww = plants + (self.plant_width*np.random.rand(plants.shape[0],2)-0.5*self.plant_width)
+                ax.scatter(ww[:,0], ww[:,1],
+                           s=scatter_scale*self.leave_size, marker=self.leave_shape[i],
+                           linewidths=0.0, alpha=self.leave_alpha, c=self.leave_color)
+        return ax
                 
