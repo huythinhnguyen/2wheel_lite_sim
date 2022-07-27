@@ -2,7 +2,7 @@ import os
 import sys
 
 import numpy as np
-from matplotlib import pyplot as plot
+from matplotlib import pyplot as plt
 
 class Agent:
     def __init__(self):
@@ -46,7 +46,16 @@ class Agent:
 
 class Food:
     def __init__(self):
-        pass
+        self.food_color = 'tomato'
+        self.food_width = 0.2
+        self.food_alpha = 0.8
+
+
+    def plot(self, ax, foods):
+        if foods.shape[1] == 3:
+            foods = foods[:,:2]
+        for i in range(foods.shape[0]):
+            ax.add_artist(plt.Circle(foods[i],self.food_width, alpha=self.food_alpha))
 
 
 class Plant:

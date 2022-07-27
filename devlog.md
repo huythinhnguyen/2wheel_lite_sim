@@ -1,3 +1,6 @@
+### 07/26/22:
+- Good enough plotting function. Make some good animation function. Like GIF or video generation?? next
+
 ### 07/22/22:
 - Tested ControlDubinsPath --> WORK!
 - Implemented the Dubins Path Planner
