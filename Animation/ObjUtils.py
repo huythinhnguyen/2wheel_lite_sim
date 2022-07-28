@@ -61,14 +61,13 @@ class Food:
 
 class Plant:
     def __init__(self):
-        self.leave_shape = 'v^<>v^<>'
-        self.leave_density = 2
-        self.leave_alpha = 0.7
+        self.leave_shape = [(5,1,0),(5,1,11),(5,1,22),(5,1,33)]
+        self.leave_alpha = 0.3
         self.leave_color = 'tab:green'
         self.leave_size = 50
-        self.plant_width = 0.2
+        self.plant_width = 0.0
 
-
+        
     def plot(self, ax, plants):
         if plants.shape[1] == 3:
             plants = plants[:,:2]
@@ -79,12 +78,9 @@ class Plant:
         xr = ax.get_xlim()[1] - ax.get_xlim()[0] + 1
         yr = ax.get_ylim()[1] - ax.get_ylim()[0] + 1
         scatter_scale = ax.get_window_extent().width/(max(xr,yr)**2)
-        temp = np.array([]).reshape(0,2)
-        for _ in range(self.leave_density):
-            for i in range(len(self.leave_shape)):
-                temp = np.vstack((temp, plants + (self.plant_width*np.random.rand(plants.shape[0],2)-0.5*self.plant_width)))
-        ax.scatter(temp[:,0], temp[:,1],
-                   s=scatter_scale*self.leave_size, marker=self.leave_shape[i],
-                   linewidths=0.0, alpha=self.leave_alpha, c=self.leave_color)
+        for i in range(len(self.leave_shape)):
+            ax.scatter(plants[:,0], plants[:,1],
+                       s=scatter_scale*self.leave_size, marker=self.leave_shape[i],
+                       linewidths=self.leave_size/10, alpha=self.leave_alpha, c=self.leave_color)
         return ax
-                
+    

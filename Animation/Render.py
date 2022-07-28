@@ -39,13 +39,13 @@ class StillImage:
         if show: self.fig.show()
 
 
-    def save(self, filename, filetype='svg', filepath=None):
+    def save(self, filename, filetype='svg', filepath=None, reset=True):
         if filepath is not None:
             self.filepath = filepath
         saveas = os.path.join(filepath, filename+'.'+filetype)
         self.fig.savefig(saveas)
         plt.close()
-        self._reset()
+        if reset: self._reset()
         
 
     def _reset(self):
@@ -71,50 +71,59 @@ class Sequences:
         self.filepath = filepath
         self.fig, self.ax = plt.subplots(figsize=(self.figsize,self.figsize))
         plt.rcParams.update({'font.size': self.fontsize})
+        self.objects = {}
+        
 
-
-    def play(self, objects, repeat=False, show=False):
-        self.anim = FuncAnimation(self.fig, self._animate, init_func=self._fig_init,
-                                  frames=len(objects['agent']), repeat=repeat, repeat_delay=100)
+    def render(self, objects, repeat=False, show=False, fps=60):
+        self.objects = objects
+        self.anim = FuncAnimation(self.fig, self._animate, init_func=None, interval=int(1000/fps),
+                                  frames=range(len(self.objects['agent'])), repeat=repeat, repeat_delay=100)
         if show: self.fig.show()
         
 
-    def save(self, filename, filetype='gif', fps=60, filepath=None):
+    def save(self, filename, filetype='gif', fps=60, filepath=None, dpi=300, reset=True):
         if filepath is not None:
             self.filepath = filepath
         saveas = os.path.join(filepath, filename+'.'+filetype)
-        if filetype=='gif':
-            writer = PillowWriter(fps=fps)
-        if filetype=='mp4' or filetype=='avi':
-            writer = FFMpegWriter(fps=fps)
-        self.anim.save(saveas, writer=writer)
+        writer = PillowWriter(fps=fps)
+        self.anim.save(saveas, writer=writer, dpi=dpi)
+        if reset: self._reset()
         
 
-    def _fig_init(self, objects):
+    def _fig_init(self):
         for i, plotter in enumerate(self.plot_obj_funcs):
             if self.objkeys[i] == 'plant':
-                self.ax = plotter(self.ax, objects[self.objkeys[i]])
+                self.ax = plotter(self.ax, self.objects[self.objkeys[i]])
         self.ax.set_aspect('equal')
         self.ax.set_xlabel(labels[0])
         self.ax.set_ylabel(labels[1])
 
 
-    def _animate(self,i, *fargs):
+    def _animate(self,i):
         self.ax.clear()
-        if len(fargs)>0: objects=fargs[0]
-        self.ax = _render_plant(self.ax, objects['plant'])
-        self.ax = _render_food(self.ax, objects['food'][i])
-        self.ax = _render_agent(self.ax, objects['agent'][:i], plotarrow=False)
-        self.ax = _render_agent(self.ax, objects['agent'][i], plotcourse=True)
+        self.ax = _render_plant(self.ax, self.objects['plant'])
+        self.ax = _render_food(self.ax, self.objects['food'][i].reshape(-1,2))
+        self.ax = _render_agent(self.ax, self.objects['agent'][:i].reshape(-1,3),plotcourse=True, plotarrow=False)
+        self.ax = _render_agent(self.ax, self.objects['agent'][i].reshape(-1,3), plotcourse=False,plotarrow=True)
+
+
+    def _reset(self):
+        garbage = [self.fig, self.ax, self.anim]
+        del self.fig, self.ax, self.anim
+        del garbage
+        self.fig, self.ax = plt.subplots(figsize=(self.figsize,self.figsize))
+        plt.rcParams.update({'font.size': self.fontsize})
+        self.objects = {}
 
         
 
 def _render_agent(ax, poses, plotcourse=True, plotarrow=True, **kwarg):
     agent = ObjUtils.Agent()
-    if kwarg['flipcourse']:
-        poses = np.flipud(poses)
-    ax = agent._course(ax, poses)
-    ax = agent._quiver(ax, poses[::kwarg['sparseness']])
+    if 'flipcourse' in kwarg.keys():
+        if kwarg['flipcourse']: poses = np.flipud(poses)
+    if plotcourse: ax = agent._course(ax, poses)
+    quivers = poses[::kwarg['sparseness']] if 'sparseness' in kwarg.keys() else poses
+    if plotarrow: ax = agent._quiver(ax, quivers)
     return ax
 
 
@@ -126,9 +135,7 @@ def _render_food(ax, foods, **kwarg):
 
 def _render_plant(ax, plants, **kwarg):
     plant = ObjUtils.Plant()
-    if kwarg['leavedensity'] is None:
-        pass
-    else:
+    if 'leavedensity' in kwarg.keys():
         plant.leave_density = kwarg['leavedensity']
     ax = plant.plot(ax, plants)
     return ax
