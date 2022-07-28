@@ -1,6 +1,6 @@
 import numpy as np
 from matplotlib import pyplot as plt
-from matplotlib.animation import FuncAnimation
+from matplotlib.animation import FuncAnimation, PillowWriter, FFMpegWriter
 
 import os
 import sys
@@ -69,22 +69,47 @@ class Sequences:
         self.figsize = figsize
         self.fontsize = fontsize
         self.filepath = filepath
-
         self.fig, self.ax = plt.subplots(figsize=(self.figsize,self.figsize))
         plt.rcParams.update({'font.size': self.fontsize})
 
 
-    def _fig_init(self):
-        # create all the set_data thingi
-        pass
+    def play(self, objects, repeat=False, show=False):
+        self.anim = FuncAnimation(self.fig, self._animate, init_func=self._fig_init,
+                                  frames=len(objects['agent']), repeat=repeat, repeat_delay=100)
+        if show: self.fig.show()
+        
+
+    def save(self, filename, filetype='gif', fps=60, filepath=None):
+        if filepath is not None:
+            self.filepath = filepath
+        saveas = os.path.join(filepath, filename+'.'+filetype)
+        if filetype=='gif':
+            writer = PillowWriter(fps=fps)
+        if filetype=='mp4' or filetype=='avi':
+            writer = FFMpegWriter(fps=fps)
+        self.anim.save(saveas, writer=writer)
+        
+
+    def _fig_init(self, objects):
+        for i, plotter in enumerate(self.plot_obj_funcs):
+            if self.objkeys[i] == 'plant':
+                self.ax = plotter(self.ax, objects[self.objkeys[i]])
+        self.ax.set_aspect('equal')
+        self.ax.set_xlabel(labels[0])
+        self.ax.set_ylabel(labels[1])
 
 
-    def _animate(self,i):
-        # pass the animation for step i
-        pass
-    
+    def _animate(self,i, *fargs):
+        self.ax.clear()
+        if len(fargs)>0: objects=fargs[0]
+        self.ax = _render_plant(self.ax, objects['plant'])
+        self.ax = _render_food(self.ax, objects['food'][i])
+        self.ax = _render_agent(self.ax, objects['agent'][:i], plotarrow=False)
+        self.ax = _render_agent(self.ax, objects['agent'][i], plotcourse=True)
 
-def _render_agent(ax, poses, **kwarg):
+        
+
+def _render_agent(ax, poses, plotcourse=True, plotarrow=True, **kwarg):
     agent = ObjUtils.Agent()
     if kwarg['flipcourse']:
         poses = np.flipud(poses)

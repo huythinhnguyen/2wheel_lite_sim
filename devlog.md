@@ -1,6 +1,8 @@
 ### 07/27/22:
 - Animation.Render.StillImage (still need to make save function) --> Use this to plot out episode's record.
-- Dev on the GIF/MP4 generation.
+- Built the GIF/MP4 generator in Render.Sequences
+- Need to test
+- Put an end to this and start integrating bat_snake
 
 ### 07/26/22:
 - Good enough plotting function. Make some good animation function. Like GIF or video generation?? next

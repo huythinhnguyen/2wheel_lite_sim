@@ -79,11 +79,12 @@ class Plant:
         xr = ax.get_xlim()[1] - ax.get_xlim()[0] + 1
         yr = ax.get_ylim()[1] - ax.get_ylim()[0] + 1
         scatter_scale = ax.get_window_extent().width/(max(xr,yr)**2)
+        temp = np.array([]).reshape(0,2)
         for _ in range(self.leave_density):
             for i in range(len(self.leave_shape)):
-                ww = plants + (self.plant_width*np.random.rand(plants.shape[0],2)-0.5*self.plant_width)
-                ax.scatter(ww[:,0], ww[:,1],
-                           s=scatter_scale*self.leave_size, marker=self.leave_shape[i],
-                           linewidths=0.0, alpha=self.leave_alpha, c=self.leave_color)
+                temp = np.vstack((temp, plants + (self.plant_width*np.random.rand(plants.shape[0],2)-0.5*self.plant_width)))
+        ax.scatter(temp[:,0], temp[:,1],
+                   s=scatter_scale*self.leave_size, marker=self.leave_shape[i],
+                   linewidths=0.0, alpha=self.leave_alpha, c=self.leave_color)
         return ax
                 
