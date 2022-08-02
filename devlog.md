@@ -1,3 +1,10 @@
+### 08/02/22:
+- Adding some arena building Utils [PROTOTYPING]
+  - build_walls --> GOOD
+  - build_circle --> not yet --> need some intelligent spacing
+  - build_arc --> mod from build circle
+- Need to migrate EchoVR in:
+
 ### 07/27/22:
 - Animation.Render.StillImage (still need to make save function) --> Use this to plot out episode's record.
 - Built the GIF/MP4 generator in Render.Sequences
