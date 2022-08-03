@@ -1,9 +1,13 @@
+#### 08/03/22:
+- Start working on porting echoVR
+
+
 ### 08/02/22:
 - Adding some arena building Utils [PROTOTYPING]
   - build_walls --> GOOD
   - build_circle -->GOOD
-  - build_arc --> mod from build circle
-- Need to migrate EchoVR in:
+  - build_arc --> GOOD
+
 
 ### 07/27/22:
 - Animation.Render.StillImage (still need to make save function) --> Use this to plot out episode's record.
