@@ -1,7 +1,7 @@
 ### 08/02/22:
 - Adding some arena building Utils [PROTOTYPING]
   - build_walls --> GOOD
-  - build_circle --> not yet --> need some intelligent spacing
+  - build_circle -->GOOD
   - build_arc --> mod from build circle
 - Need to migrate EchoVR in:
 
