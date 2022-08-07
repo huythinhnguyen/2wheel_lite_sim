@@ -19,11 +19,40 @@ class Retriever:
         self.polerev_ends   = _POLEREV_ENDS
         self.plant_starts   = _PLANT_STARTS
         self.plant_ends     = _PLANT_ENDS
-        
+        self.bg_sigma = 0.6
+        self.bg_mu = 5e-4
+        self.emission_encoding = 0.33
 
 
-    def _snip_main(self, echo, reference_distance, reference_angle):
-        
+    def _snip_pole(self, echo, reference_distance):
+        start = self.pole_starts[reference_distance]
+        end = self.pole_ends[reference_distance]
+        start_idx = np.argmin(np.abs(DISTANCE_ENCODING - start))
+        end_idx = np.argmin(np.abs(DISTANCE_ENCODING - end))
+        left_snip = echo['left'][start_idx:end_idx]
+        right_snip = echo['right'[start_idx:end_idx]]
+        return left_snip, right_snip
+
+
+    def _snip_polerev(self, echo, reference_distance):
+        start = self.polerev_starts[reference_distance]
+        end = self.polerev_ends[reference_distance]
+        start_idx = np.argmin(np.abs(DISTANCE_ENCODING - start))
+        end_idx = np.argmin(np.abs(DISTANCE_ENCODING - end))
+        left_snip = echo['left'][start_idx:end_idx]
+        right_snip = echo['right'[start_idx:end_idx]]
+        return left_snip, right_snip
+
+    
+    def _snip_plant(self, echo, reference_distance):
+        start = self.plant_starts[reference_distance]
+        end = self.plant_ends[reference_distance]
+        start_idx = np.argmin(np.abs(DISTANCE_ENCODING - start))
+        end_idx = np.argmin(np.abs(DISTANCE_ENCODING - end))
+        left_snip = echo['left'][start_idx:end_idx]
+        right_snip = echo['right'[start_idx:end_idx]]
+        return left_snip, right_snip
+    
 
 class Transformer:
     def __init__(self):
