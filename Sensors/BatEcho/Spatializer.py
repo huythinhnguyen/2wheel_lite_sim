@@ -60,9 +60,20 @@ class Retriever:
 
 
     def _get_snip(self, objects):
+        #objects = objects[ np.argsort(objects[:,2]) ]
         left_echoes, right_echoes = self._get_angle_interpolated_reference(objects)
-        masks = np.zeros(left_echoes.shape)
-        ###
+        masks = np.empty(left_echoes.shape)
+
+        temp_indexes = objects[:,2]==self.objects_dict['pole']
+        masks[ temp_indexes ] = self._pole_mask(objects[ temp_indexes][:,1])
+        return masks*left_echoes, masks*right_echoes
+
+
+    def _pole_mask(self, distances):
+
+
+    de
+        
     
 
     def _snip_pole(self, echo, reference_distance):
