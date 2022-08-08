@@ -24,6 +24,23 @@ class Retriever:
         self.emission_encoding = 0.33
 
 
+
+
+    def _get_reference(dist, angle, klass, random=True, index=None):
+        path = None
+        left_set = np.load(path + 'left.npy')
+        right_set = np.load(path + 'right.npy')
+        if not random:
+            np.random.seed(1)
+            if index is not None: selection = index
+            else: raise ValueError('must input index when random=False')
+        else:
+            selection = np.random.randint(len(left_set))
+        return left_set[selection,:], right_set[selection,:]
+    
+
+            
+
     def _snip_pole(self, echo, reference_distance):
         start = self.pole_starts[reference_distance]
         end = self.pole_ends[reference_distance]
