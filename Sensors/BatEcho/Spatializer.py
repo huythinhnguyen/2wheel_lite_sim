@@ -22,24 +22,48 @@ class Retriever:
         self.bg_sigma = 0.6
         self.bg_mu = 5e-4
         self.emission_encoding = 0.33
+        self.random = True
+        self.non_random_index = None
+        self.angle_step = 1
+        self.raw_length = 7000
+        self.objects_dict = {'bg': 0, 'pole':1, 'plant':2}
 
 
-
-
-    def _get_reference(dist, angle, klass, random=True, index=None):
-        path = None
-        left_set = np.load(path + 'left.npy')
-        right_set = np.load(path + 'right.npy')
-        if not random:
+    def _get_reference(self,objects):
+        if not self.random:
             np.random.seed(1)
-            if index is not None: selection = index
+            if self.non_random_index is not None: selection = self.non_random_index
             else: raise ValueError('must input index when random=False')
-        else:
-            selection = np.random.randint(len(left_set))
-        return left_set[selection,:], right_set[selection,:]
-    
+        distances = [objects[0]] if type(objects)==list else list(objects[:,0])
+        angles = [objects[1]] if type(objects)==list else list(objects[:,1])
+        klasses = [objects[2]] if type(objects)==list else list(objects[:,2])
+        left_echoes, right_echoes = np.empty((len(distances),self.raw_length)), np.empty((len(distances),self.raw_length))
+        for i, (distance, angle, klass) in zip(distances, angles, klasses):
+            path = self._get_data_path(distance, angle, klass)
+            left_set = np.load(path + 'left.npy')
+            right_set = np.load(path + 'right.npy')
+            if self.random: selection = np.random.randint(len(left_set))
+            left_echoes[i], right_echoes[i] = left_set[selection,:], right_set[selection,:]
+        return left_echoes, right_echoes
 
-            
+
+    def _get_angle_interpolated_reference(self,objects): # LINEAR
+        if type(objects)==list: objects = np.array(objects).reshape(-1,3)
+        objects_A, objects_B = np.copy(objects), np.copy(objects)
+        objects_A[:,1], objects_B[:,1] = np.floor(objects[:,1]), np.ceil(objects[:,1])
+        weights = np.array([1-np.modf(objects[:,1])[0],np.modf(objects[:,1])[0]]).T
+        leftA, rightA = self._get_reference(objects_A)
+        leftB, rightB = self._get_reference(objects_B)
+        left_echoes = leftA * weights[:,:1] + leftB * weights[:,1:]
+        right_echoes=rightA * weights[:,:1] +rightB * weights[:,1:]
+        return left_echoes, right_echoes
+
+
+    def _get_snip(self, objects):
+        left_echoes, right_echoes = self._get_angle_interpolated_reference(objects)
+        masks = np.zeros(left_echoes.shape)
+        ###
+    
 
     def _snip_pole(self, echo, reference_distance):
         start = self.pole_starts[reference_distance]
