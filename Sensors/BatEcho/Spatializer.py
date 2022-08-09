@@ -89,23 +89,23 @@ class Retriever:
         if main: starts, ends = [],[]
         if rev : starts2,ends2= [],[]
         for ref in distances:
-            starts.append(self.pole_starts[ref])
-            ends.append(self.pole_ends[ref])
-            starts2.append(self.polerev_starts[ref])
-            ends2.append(self.polerev_ends[ref])
-        start_indexes = np.argmin(np.abs(DISTANCE_ENCODING - np.asarray(starts).reshape(-1,1)),axis=1)
-        end_indexes = np.argmin(np.abs(DISTANCE_ENCODING - np.asarray(ends).reshape(-1,1)), axis=1)
-        start2_indexes = np.argmin(np.abs(DISTANCE_ENCODING - np.asarray(starts2).reshape(-1,1)),axis=1)
-        end2_indexes = np.argmin(np.abs(DISTANCE_ENCODING - np.asarray(ends2).reshape(-1,1)), axis=1)
+            if main:
+                starts.append(self.pole_starts[ref])
+                ends.append(self.pole_ends[ref])
+            if rev:
+                starts2.append(self.polerev_starts[ref])
+                ends2.append(self.polerev_ends[ref])
+        if main:
+            start_indexes = np.argmin(np.abs(DISTANCE_ENCODING - np.asarray(starts).reshape(-1,1)),axis=1)
+            end_indexes = np.argmin(np.abs(DISTANCE_ENCODING - np.asarray(ends).reshape(-1,1)), axis=1)
+        if rev:
+            start2_indexes = np.argmin(np.abs(DISTANCE_ENCODING - np.asarray(starts2).reshape(-1,1)),axis=1)
+            end2_indexes = np.argmin(np.abs(DISTANCE_ENCODING - np.asarray(ends2).reshape(-1,1)), axis=1)
         mask = np.zeros((len(distances),self.raw_length))
-
-        print('start_indexes', start_indexes)
-        print('end_indexes', end_indexes)
-        print('start2_indexes', start2_indexes)
-        print('end2_indexes', end2_indexes)
-        
-        for i, (sid, eid) in enumerate(zip(start_indexes, end_indexes)): mask[i][sid:eid] = 1.
-        for i, (sid, eid) in enumerate(zip(start2_indexes, end2_indexes)): mask[i][sid:eid] = 1.
+        if main:
+            for i, (sid, eid) in enumerate(zip(start_indexes, end_indexes)): mask[i][sid:eid] = 1.
+        if rev:
+            for i, (sid, eid) in enumerate(zip(start2_indexes, end2_indexes)): mask[i][sid:eid] = 1.
         return mask
 
 
