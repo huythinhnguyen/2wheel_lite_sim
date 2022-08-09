@@ -112,6 +112,13 @@ class Retriever:
         mask = np.zeros((len(reference_distances),self.raw_length))
         for i, (sid, eid) in enumerate(zip(start_indexes, end_indexes)): mask[i][sid,eid] = 1
         return mask
+
+
+    def _get_background(self):
+        left_echo, right_echo = self._get_reference([0.0, 0.0, 0])
+        bg_index = np.argmin(np.abs(DISTANCE_ENCODING - self.emission_encoding)) + 1
+        left_echo[:, bg_index:] = np.random.normal( self.bg_mu, self.bg_sigma, self.raw_length - bg_index )
+        right_echo[:,bg_index:] = np.random.normal( self.bg_mu, self.bg_sigma, self.raw_length - bg_index )
     
 
 class Transformer:
