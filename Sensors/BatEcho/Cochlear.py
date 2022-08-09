@@ -3,7 +3,7 @@ Cochlear Transformation using Gammatone Filtering
 """
 
 import numpy as np
-from scipy.signal import butter, lfiter, gammatone
+from scipy.signal import butter, lfilter, gammatone
 
 
 class CochlearFilter:
