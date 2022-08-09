@@ -1,4 +1,4 @@
-"""A
+"""
 Spatializer reference sounds into scence when given locations of sound sources
 """
 
@@ -16,7 +16,7 @@ sys.path.append(os.path.dirname(os.path.abspath(__file__))+"/dataset")
 class Retriever:
     def __init__(self, ):
         self.pole_starts = _POLE_STARTS
-        self.pole_endS   = _POLE_ENDS
+        self.pole_ends   = _POLE_ENDS
         self.polerev_starts = _POLEREV_STARTS
         self.polerev_ends   = _POLEREV_ENDS
         self.plant_starts   = _PLANT_STARTS
@@ -44,7 +44,7 @@ class Retriever:
         angles = [objects[1]] if type(objects)==list else list(objects[:,1])
         klasses = [objects[2]] if type(objects)==list else list(objects[:,2])
         left_echoes, right_echoes = np.empty((len(distances),self.raw_length)), np.empty((len(distances),self.raw_length))
-        for i, (distance, angle, klass) in zip(distances, angles, klasses):
+        for i, (distance, angle, klass) in enumerate(zip(distances, angles, klasses)):
             path = self._get_data_path(distance, angle, klass)
             left_set = np.load(os.path.join(path, 'left.npy'))
             right_set = np.load(os.path.join(path, 'right.npy'))
@@ -79,38 +79,45 @@ class Retriever:
         left_echoes, right_echoes = self._get_angle_interpolated_reference(objects)
         masks = np.empty(left_echoes.shape)
         temp_indexes = objects[:,2]==self.objects_dict['pole']
-        masks[ temp_indexes ] = self._pole_mask(objects[ temp_indexes][:,1])
+        masks[ temp_indexes ] = self._pole_mask(objects[ temp_indexes][:,0])
         temp_indexes = objects[:,2]==self.objects_dict['plant']
-        masks[ temp_indexes ] = self._plant_mask(objects[ temp_indexes][:,1])
+        masks[ temp_indexes ] = self._plant_mask(objects[ temp_indexes][:,0])
         return masks*left_echoes, masks*right_echoes
 
 
-    def _pole_mask(self, distances):
-        starts, ends, starts2, ends2 = [],[],[], []
-        for ref in reference_distances:
+    def _pole_mask(self, distances, main=True, rev=True):
+        if main: starts, ends = [],[]
+        if rev : starts2,ends2= [],[]
+        for ref in distances:
             starts.append(self.pole_starts[ref])
             ends.append(self.pole_ends[ref])
             starts2.append(self.polerev_starts[ref])
             ends2.append(self.polerev_ends[ref])
-        start_indexes = np.argmin(np.abs(DISTANCE_ENCODING - np.asarray(starts).reshape(-1,1)))
-        end_indexes = np.argmin(np.abs(DISTANCE_ENCODING - np.asarray(ends).reshape(-1,1)))
-        start2_indexes = np.argmin(np.abs(DISTANCE_ENCODING - np.asarray(starts2).reshape(-1,1)))
-        end2_indexes = np.argmin(np.abs(DISTANCE_ENCODING - np.asarray(ends2).reshape(-1,1)))
-        mask = np.zeros((len(reference_distances),self.raw_length))
-        for i, (sid, eid) in enumerate(zip(start_indexes, end_indexes)): mask[i][sid,eid] = 1
-        for i, (sid, eid) in enumerate(zip(start2_indexes, end2_indexes)): mask[i][sid,eid] = 1
+        start_indexes = np.argmin(np.abs(DISTANCE_ENCODING - np.asarray(starts).reshape(-1,1)),axis=1)
+        end_indexes = np.argmin(np.abs(DISTANCE_ENCODING - np.asarray(ends).reshape(-1,1)), axis=1)
+        start2_indexes = np.argmin(np.abs(DISTANCE_ENCODING - np.asarray(starts2).reshape(-1,1)),axis=1)
+        end2_indexes = np.argmin(np.abs(DISTANCE_ENCODING - np.asarray(ends2).reshape(-1,1)), axis=1)
+        mask = np.zeros((len(distances),self.raw_length))
+
+        print('start_indexes', start_indexes)
+        print('end_indexes', end_indexes)
+        print('start2_indexes', start2_indexes)
+        print('end2_indexes', end2_indexes)
+        
+        for i, (sid, eid) in enumerate(zip(start_indexes, end_indexes)): mask[i][sid:eid] = 1.
+        for i, (sid, eid) in enumerate(zip(start2_indexes, end2_indexes)): mask[i][sid:eid] = 1.
         return mask
 
 
     def _plant_mask(self, distances):
         starts, ends = [],[]
-        for ref in reference_distances:
+        for ref in distances:
             starts.append(self.plant_starts[ref])
             ends.append(self.plant_ends[ref])
-        start_indexes = np.argmin(np.abs(DISTANCE_ENCODING - np.asarray(starts).reshape(-1,1)))
-        end_indexes = np.argmin(np.abs(DISTANCE_ENCODING - np.asarray(ends).reshape(-1,1)))
-        mask = np.zeros((len(reference_distances),self.raw_length))
-        for i, (sid, eid) in enumerate(zip(start_indexes, end_indexes)): mask[i][sid,eid] = 1
+        start_indexes = np.argmin(np.abs(DISTANCE_ENCODING - np.asarray(starts).reshape(-1,1)), axis=1)
+        end_indexes = np.argmin(np.abs(DISTANCE_ENCODING - np.asarray(ends).reshape(-1,1)), axis=1)
+        mask = np.zeros((len(distances),self.raw_length))
+        for i, (sid, eid) in enumerate(zip(start_indexes, end_indexes)): mask[i][sid:eid] = 1.
         return mask
 
 
@@ -127,7 +134,7 @@ class Transformer:
         self.outward_spread_factor = 1
         self.inward_spread_factor = 0.5
         self.air_absorption = 1.31
-        self.
+        
 
 
 class Render:
