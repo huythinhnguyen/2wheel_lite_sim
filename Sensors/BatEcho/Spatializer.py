@@ -33,6 +33,10 @@ class Retriever:
             if 'dataset' in sys.path[i]:
                 self.DATAROOT = sys.path[i]
                 break
+        # TRANSFORMATION PARAMETER:
+        self.outward_spread_factor = 1
+        self.inward_spread_factor = 0.5
+        self.air_absorption = 1.31
 
             
     def _get_reference(self,objects):
@@ -88,6 +92,7 @@ class Retriever:
     def _pole_mask(self, distances, main=True, rev=True):
         if main: starts, ends = [],[]
         if rev : starts2,ends2= [],[]
+        ref_distances = self._calc_ref_distances(distances, mode='pole')
         for ref in distances:
             if main:
                 starts.append(self.pole_starts[ref])
@@ -121,21 +126,20 @@ class Retriever:
         return mask
 
 
+    def _calc_ref_distances(self, distances, mode):
+        if mode not in self.objects_dict.keys(): raise ValueError('_calc_ref_distance mode not valid')
+        if mode=='pole':
+            pass
+        elif mode=='plant':
+            pass
+    
+
     def _get_background(self):
         left_echo, right_echo = self._get_reference([0.0, 0.0, 0])
         bg_index = np.argmin(np.abs(DISTANCE_ENCODING - self.emission_encoding)) + 1
         left_echo[:, bg_index:] = np.random.normal( self.bg_mu, self.bg_sigma, self.raw_length - bg_index )
         right_echo[:,bg_index:] = np.random.normal( self.bg_mu, self.bg_sigma, self.raw_length - bg_index )
     
-
-class Transformer:
-    def __init__(self):
-        self.ret = Retriever()
-        self.outward_spread_factor = 1
-        self.inward_spread_factor = 0.5
-        self.air_absorption = 1.31
-        
-
 
 class Render:
     def __init__(self):
