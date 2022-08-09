@@ -63,47 +63,40 @@ class Retriever:
         #objects = objects[ np.argsort(objects[:,2]) ]
         left_echoes, right_echoes = self._get_angle_interpolated_reference(objects)
         masks = np.empty(left_echoes.shape)
-
         temp_indexes = objects[:,2]==self.objects_dict['pole']
         masks[ temp_indexes ] = self._pole_mask(objects[ temp_indexes][:,1])
+        temp_indexes = objects[:,2]==self.objects_dict['plant']
+        masks[ temp_indexes ] = self._plant_mask(objects[ temp_indexes][:,1])
         return masks*left_echoes, masks*right_echoes
 
 
     def _pole_mask(self, distances):
+        starts, ends, starts2, ends2 = [],[],[], []
+        for ref in reference_distances:
+            starts.append(self.pole_starts[ref])
+            ends.append(self.pole_ends[ref])
+            starts2.append(self.polerev_starts[ref])
+            ends2.append(self.polerev_ends[ref])
+        start_indexes = np.argmin(np.abs(DISTANCE_ENCODING - np.asarray(starts).reshape(-1,1)))
+        end_indexes = np.argmin(np.abs(DISTANCE_ENCODING - np.asarray(ends).reshape(-1,1)))
+        start2_indexes = np.argmin(np.abs(DISTANCE_ENCODING - np.asarray(starts2).reshape(-1,1)))
+        end2_indexes = np.argmin(np.abs(DISTANCE_ENCODING - np.asarray(ends2).reshape(-1,1)))
+        mask = np.zeros((len(reference_distances),self.raw_length))
+        for i, (sid, eid) in enumerate(zip(start_indexes, end_indexes)): mask[i][sid,eid] = 1
+        for i, (sid, eid) in enumerate(zip(start2_indexes, end2_indexes)): mask[i][sid,eid] = 1
+        return mask
 
 
-    de
-        
-    
-
-    def _snip_pole(self, echo, reference_distance):
-        start = self.pole_starts[reference_distance]
-        end = self.pole_ends[reference_distance]
-        start_idx = np.argmin(np.abs(DISTANCE_ENCODING - start))
-        end_idx = np.argmin(np.abs(DISTANCE_ENCODING - end))
-        left_snip = echo['left'][start_idx:end_idx]
-        right_snip = echo['right'[start_idx:end_idx]]
-        return left_snip, right_snip
-
-
-    def _snip_polerev(self, echo, reference_distance):
-        start = self.polerev_starts[reference_distance]
-        end = self.polerev_ends[reference_distance]
-        start_idx = np.argmin(np.abs(DISTANCE_ENCODING - start))
-        end_idx = np.argmin(np.abs(DISTANCE_ENCODING - end))
-        left_snip = echo['left'][start_idx:end_idx]
-        right_snip = echo['right'[start_idx:end_idx]]
-        return left_snip, right_snip
-
-    
-    def _snip_plant(self, echo, reference_distance):
-        start = self.plant_starts[reference_distance]
-        end = self.plant_ends[reference_distance]
-        start_idx = np.argmin(np.abs(DISTANCE_ENCODING - start))
-        end_idx = np.argmin(np.abs(DISTANCE_ENCODING - end))
-        left_snip = echo['left'][start_idx:end_idx]
-        right_snip = echo['right'[start_idx:end_idx]]
-        return left_snip, right_snip
+    def _plant_mask(self, distances):
+        starts, ends = [],[]
+        for ref in reference_distances:
+            starts.append(self.plant_starts[ref])
+            ends.append(self.plant_ends[ref])
+        start_indexes = np.argmin(np.abs(DISTANCE_ENCODING - np.asarray(starts).reshape(-1,1)))
+        end_indexes = np.argmin(np.abs(DISTANCE_ENCODING - np.asarray(ends).reshape(-1,1)))
+        mask = np.zeros((len(reference_distances),self.raw_length))
+        for i, (sid, eid) in enumerate(zip(start_indexes, end_indexes)): mask[i][sid,eid] = 1
+        return mask
     
 
 class Transformer:
