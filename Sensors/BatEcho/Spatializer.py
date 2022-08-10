@@ -17,8 +17,6 @@ class Retriever:
     def __init__(self, ):
         self.pole_starts = _POLE_STARTS
         self.pole_ends   = _POLE_ENDS
-        self.polerev_starts = _POLEREV_STARTS
-        self.polerev_ends   = _POLEREV_ENDS
         self.plant_starts   = _PLANT_STARTS
         self.plant_ends     = _PLANT_ENDS
         self.bg_sigma = 0.6
@@ -80,6 +78,11 @@ class Retriever:
         return left_echoes, right_echoes
 
 
+    def _propagate_snip(self, left_echoes, right_echoes, objects):
+        temp_indexes = objects[:,2]==self.objects_dict['pole']
+        rolling = self.cache{'pole_rolls'}
+    
+
     def _get_snip(self, objects):
         #objects = objects[ np.argsort(objects[:,2]) ]
         left_echoes, right_echoes = self._get_angle_interpolated_reference(objects)
@@ -88,20 +91,15 @@ class Retriever:
         masks[ temp_indexes ] = self._pole_mask(objects[ temp_indexes][:,0])
         temp_indexes = objects[:,2]==self.objects_dict['plant']
         masks[ temp_indexes ] = self._plant_mask(objects[ temp_indexes][:,0])
-        return masks*left_echoes, masks*right_echoes
+        return mask*left_echoes, mask*right_echoes
 
 
-    def _pole_mask(self, distances, main=True, rev=True):
-        if main: ref_start_indexes, ref_end_indexes, start_indexes, end_indexes = self._get_ref_indexes(distances, mode='pole')
-        if rev: ref_start2_indexes,ref_end2_indexs,start2_indexes,end2_indexes = self._get_ref_indexes(distances, mode='polerev')
-        mask = np.zeros((len(distances),self.raw_length))
+    def _pole_mask(self, distances):
+        ref_start_indexes, ref_end_indexes, start_indexes, end_indexes = self._get_ref_indexes(distances, mode='pole')
+         mask = np.zeros((len(distances),self.raw_length))
         attenuations = self._attenuation(ref_start_indexes, ref_end_indexes, start_indexes, end_indexes)
-        if main:
-            for i, (s, e, attn) in enumerate(zip(ref_start_indexes, ref_end_indexes, attenuations)):
-                mask[i][s:e] = attn
-        if rev:
-            for i, (s, e, to_s) in enumerate(zip(ref_start2_indexes, ref_end2_indexes, start2_indexes)):
-                mask[i][s:e] = 1.2 * (DISTANCE_ENCODING[to_s]- DISTANCE_ENCODING[s]) + 0.7
+        for i, (s, e, attn) in enumerate(zip(ref_start_indexes, ref_end_indexes, attenuations)):
+            mask[i][s:e] = attn
         return mask
 
 
@@ -125,17 +123,13 @@ class Retriever:
 
 
     def _get_ref_indexes(self, distances, mode):
-        start_dict, end_dict = self.pole_starts, self.pole_ends if mode=='pole' else self.plant_starts, self.plant_ends if mode=='plant' else self.polerev_starts, self.polerev_ends
+        start_dict, end_dict = self.pole_starts, self.pole_ends if mode=='pole' else self.plant_starts, self.plant_ends
         ref_starts, starts, ref_ends = [],[],[]
-        ref_distances = self._calc_ref_distances(distances, mode='pole')
+        ref_distances = self._calc_ref_distances(distances, mode=mode)
         for ref, dist in zip(ref_distances, distances):
             ref_starts.append(self.pole_starts[ref])
             ref_ends.append(self.pole_ends[ref])
-            if mode=='polerev':
-                (a,b,c) = (1.134, 2.532, 0.14)
-                starts.append(self.pole_starts[ref] + dist - ref + a*np.exp(-b*dist)+c)
-            else:
-                starts.append(self.pole_starts[ref] + dist - ref)
+            starts.append(self.pole_starts[ref] + dist - ref)
         ref_start_indexes = np.argmin(np.abs(DISTANCE_ENCODING - np.asarray(ref_starts).reshape(-1,1)),axis=1)
         ref_end_indexes = np.argmin(np.abs(DISTANCE_ENCODING - np.asarray(ref_ends).reshape(-1,1)), axis=1) + 1
         start_indexes = np.argmin(np.abs(DISTANCE_ENCODING - np.asarray(starts).reshape(-1,1)),axis=1)
@@ -171,7 +165,7 @@ class Render:
 
 _POLE_STARTS  = {0.25: 0.13, 0.5: 0.38, 0.75: 0.62, 1.0: 0.88, 1.25: 1.12, 1.5: 1.36, 1.75: 1.62, 2.0: 1.87, 2.25: 2.11, 2.5: 2.35}
 _POLE_ENDS    = {0.25: 0.47, 0.5: 0.66, 0.75: 0.88, 1.0: 1.1, 1.25: 1.31, 1.5: 1.53, 1.75: 1.76, 2.0: 1.98, 2.25: 2.22, 2.5: 2.48}
-_POLEREV_STARTS= {0.25: 0.89, 0.5: 0.79, 0.75: 0.94,1.0: 1.13, 1.25: 1.33, 1.5: 1.55, 1.75: 1.78, 2.0: 2.01, 2.25: 2.24, 2.5: 3.99}
-_POLEREV_ENDS  = {0.25: 1.13, 0.5: 0.99, 0.75: 1.15, 1.0: 1.33, 1.25: 1.51, 1.5: 1.71, 1.75: 1.92, 2.0: 2.14, 2.25: 2.35, 2.5: 3.99}
+#_POLEREV_STARTS= {0.25: 0.89, 0.5: 0.79, 0.75: 0.94,1.0: 1.13, 1.25: 1.33, 1.5: 1.55, 1.75: 1.78, 2.0: 2.01, 2.25: 2.24, 2.5: 3.99}
+#_POLEREV_ENDS  = {0.25: 1.13, 0.5: 0.99, 0.75: 1.15, 1.0: 1.33, 1.25: 1.51, 1.5: 1.71, 1.75: 1.92, 2.0: 2.14, 2.25: 2.35, 2.5: 3.99}
 _PLANT_STARTS = {0.5: 0.26, 0.75: 0.49, 1.0: 0.76, 1.25: 0.99, 1.5: 1.24, 1.75: 1.49, 2.0: 1.74, 2.25: 1.91, 2.5: 2.24}
 _PLANT_ENDS   = {0.5: 1.29, 0.75: 1.35, 1.0: 1.57, 1.25: 1.71, 1.5: 1.76, 1.75: 1.88, 2.0: 2.38, 2.25: 2.47, 2.5: 2.72}
