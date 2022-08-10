@@ -38,6 +38,8 @@ class Retriever:
         self.inward_spread_factor = 0.5
         self.air_absorption = 1.31
 
+        self.cache={}
+
             
     def _get_reference(self,objects):
         if not self.random:
@@ -90,41 +92,56 @@ class Retriever:
 
 
     def _pole_mask(self, distances, main=True, rev=True):
-        if main: starts, ends = [],[]
-        if rev : starts2,ends2= [],[]
-        ref_distances = self._calc_ref_distances(distances, mode='pole')
-        for ref in distances:
-            if main:
-                starts.append(self.pole_starts[ref])
-                ends.append(self.pole_ends[ref])
-            if rev:
-                starts2.append(self.polerev_starts[ref])
-                ends2.append(self.polerev_ends[ref])
-        if main:
-            start_indexes = np.argmin(np.abs(DISTANCE_ENCODING - np.asarray(starts).reshape(-1,1)),axis=1)
-            end_indexes = np.argmin(np.abs(DISTANCE_ENCODING - np.asarray(ends).reshape(-1,1)), axis=1)
-        if rev:
-            start2_indexes = np.argmin(np.abs(DISTANCE_ENCODING - np.asarray(starts2).reshape(-1,1)),axis=1)
-            end2_indexes = np.argmin(np.abs(DISTANCE_ENCODING - np.asarray(ends2).reshape(-1,1)), axis=1)
+        if main: ref_start_indexes, ref_end_indexes, start_indexes, end_indexes = self._get_ref_indexes(distances, mode='pole')
+        if rev: ref_start2_indexes,ref_end2_indexs,start2_indexes,end2_indexes = self._get_ref_indexes(distances, mode='polerev')
         mask = np.zeros((len(distances),self.raw_length))
+        attenuations = self._attenuation(ref_start_indexes, ref_end_indexes, start_indexes, end_indexes)
         if main:
-            for i, (sid, eid) in enumerate(zip(start_indexes, end_indexes)): mask[i][sid:eid] = 1.
+            for i, (s, e, attn) in enumerate(zip(ref_start_indexes, ref_end_indexes, attenuations)):
+                mask[i][s:e] = attn
         if rev:
-            for i, (sid, eid) in enumerate(zip(start2_indexes, end2_indexes)): mask[i][sid:eid] = 1.
+            for i, (s, e, to_s) in enumerate(zip(ref_start2_indexes, ref_end2_indexes, start2_indexes)):
+                mask[i][s:e] = 1.2 * (DISTANCE_ENCODING[to_s]- DISTANCE_ENCODING[s]) + 0.7
         return mask
 
 
     def _plant_mask(self, distances):
-        starts, ends = [],[]
-        for ref in distances:
-            starts.append(self.plant_starts[ref])
-            ends.append(self.plant_ends[ref])
-        start_indexes = np.argmin(np.abs(DISTANCE_ENCODING - np.asarray(starts).reshape(-1,1)), axis=1)
-        end_indexes = np.argmin(np.abs(DISTANCE_ENCODING - np.asarray(ends).reshape(-1,1)), axis=1)
+        ref_start_indexes, ref_end_indexes, start_indexes, end_indexes = self._get_ref_indexes(distances, mode='plant')
         mask = np.zeros((len(distances),self.raw_length))
-        for i, (sid, eid) in enumerate(zip(start_indexes, end_indexes)): mask[i][sid:eid] = 1.
+        attenuations = self._attenuation(ref_start_indexes, ref_end_indexes, start_indexes, end_indexes)
+        for i, (s, e, attn) in enumerate(zip(ref_start_indexes, ref_end_indexes, attenuations)):
+            mask[i][s:e] = attn
         return mask
 
+    def _attenuation(self, ref_sid, ref_eid, sid, eid):
+        ref_distances = [DISTANCE_ENCODING[s:e] for s, e in zip(ref_sid, ref_eid)]
+        to_distances = [DISTANCE_ENCODING[s:e] for s,e in zip(sid, eid)]
+        attenuations = []
+        for from_dist, to_dist in zip(ref_distances, to_distances):
+            atmospheric = np.power(10, -self.air_absorption*2*(to_dist[0] - from_dist[0])/20)
+            spreading = np.divide(from_dist , to_dist) ** (self.outward_spreading_factor + self.inward_spreading_factor)
+            attenuations.append(atmospheric * spreading)
+        return attentuations
+
+
+    def _get_ref_indexes(self, distances, mode):
+        start_dict, end_dict = self.pole_starts, self.pole_ends if mode=='pole' else self.plant_starts, self.plant_ends if mode=='plant' else self.polerev_starts, self.polerev_ends
+        ref_starts, starts, ref_ends = [],[],[]
+        ref_distances = self._calc_ref_distances(distances, mode='pole')
+        for ref, dist in zip(ref_distances, distances):
+            ref_starts.append(self.pole_starts[ref])
+            ref_ends.append(self.pole_ends[ref])
+            if mode=='polerev':
+                (a,b,c) = (1.134, 2.532, 0.14)
+                starts.append(self.pole_starts[ref] + dist - ref + a*np.exp(-b*dist)+c)
+            else:
+                starts.append(self.pole_starts[ref] + dist - ref)
+        ref_start_indexes = np.argmin(np.abs(DISTANCE_ENCODING - np.asarray(ref_starts).reshape(-1,1)),axis=1)
+        ref_end_indexes = np.argmin(np.abs(DISTANCE_ENCODING - np.asarray(ref_ends).reshape(-1,1)), axis=1) + 1
+        start_indexes = np.argmin(np.abs(DISTANCE_ENCODING - np.asarray(starts).reshape(-1,1)),axis=1)
+        end_indexes = start_indexes + (ref_end_indexes - ref_start_indexes)
+        return ref_start_indexes, ref_end_indexes, start_indexes, end_indexes
+    
 
     def _calc_ref_distances(self, distances, mode):
         if type(distances) is not np.ndarray: distances = np.asarray(distances)
