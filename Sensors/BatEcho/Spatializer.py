@@ -166,12 +166,22 @@ class Retriever:
         bg_index = np.argmin(np.abs(DISTANCE_ENCODING - self.emission_encoding)) + 1
         left_echo[:, bg_index:] = np.random.normal( self.bg_mu, self.bg_sigma, self.raw_length - bg_index )
         right_echo[:,bg_index:] = np.random.normal( self.bg_mu, self.bg_sigma, self.raw_length - bg_index )
-    
+        return left_echo, right_echo
+        
 
 class Render:
     def __init__(self):
-        pass
-    
+        self.fetch = Retriever()
+
+
+    def objects_to_scene(self, objects):
+        left_bg, right_bg = self.fetch._get_background()
+        left_echoes, right_echoes = self.fetch._get_snip(objects)
+        left_echoes, right_echoes = self.fetch._propagate_snip(left_echoes, right_echoes, objects)
+        left_scene = left_bg + np.sum(left_echoes, axis=0)
+        right_scene= right_bg +np.sum(right_echoes,axis=0)
+        scence = {'left':left_scene, 'right':right_scene}
+        return scene
 
 
 _POLE_STARTS  = {0.25: 0.13, 0.5: 0.38, 0.75: 0.62, 1.0: 0.88, 1.25: 1.12, 1.5: 1.36, 1.75: 1.62, 2.0: 1.87, 2.25: 2.11, 2.5: 2.35}
