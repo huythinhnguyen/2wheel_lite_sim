@@ -127,14 +127,16 @@ class Retriever:
 
 
     def _calc_ref_distances(self, distances, mode):
-        if type(distance) is not np.ndarray: distances = np.asarray(distances)
+        if type(distances) is not np.ndarray: distances = np.asarray(distances)
         distances = distances.reshape(-1,)
         if mode not in self.objects_dict.keys(): raise ValueError('_calc_ref_distance mode not valid')
-        if pole=='pole': bar = np.concatenate(([0.], list(self.pole_starts.keys()), [float('inf')]))
-        elif pole=='plant': bar = np.concatenate(([0.], list(self.plant_starts.keys()), [float('inf')]))
-        comparison_matrix = (distances.reshape(-1,1) >= bar) ^ np.roll(( x.reshape(-1,1) >= bar), -1)
+        if mode=='pole':   standards = list(self.pole_starts.keys())
+        elif mode=='plant':standards = list(self.plant_starts.keys())
+        bar = np.concatenate(([0.], standards, [max(standards)+10]))
+        comparison_matrix = (distances.reshape(-1,1) >= bar) ^ np.roll(( distances.reshape(-1,1) >= bar), -1)
         comparison_matrix[:,-1] = False
-        return B @ bar
+        result = np.clip(comparison_matrix @ bar, min(standards), max(standards))
+        return result
     
 
     def _get_background(self):
