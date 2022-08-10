@@ -80,8 +80,18 @@ class Retriever:
 
     def _propagate_snip(self, left_echoes, right_echoes, objects):
         temp_indexes = objects[:,2]==self.objects_dict['pole']
-        rolling = self.cache{'pole_rolls'}
-    
+        rollings = self.cache{'pole_rolls'}
+        for i, (le,re,r) in enumerate(zip(left_echoes[temp_indexes],right_echoes[temp_indexes],rollings)):
+            left_echoes[temp_indexes][i] = np.roll(le, r)
+            right_echoes[temp_indexes][i] =np.roll(re, r)
+        temp_indexes = objects[:,2]==self.objects_dict['plant']
+        rollings = self.cache{'plant_rolls'}
+        for i, (le,re,r) in enumerate(zip(left_echoes[temp_indexes],right_echoes[temp_indexes],rollings)):
+            left_echoes[temp_indexes][i] = np.roll(le, r)
+            right_echoes[temp_indexes][i] =np.roll(re, r)
+        self.cache.clear()
+        return left_echoes, right_echoes
+            
 
     def _get_snip(self, objects):
         #objects = objects[ np.argsort(objects[:,2]) ]
@@ -134,6 +144,7 @@ class Retriever:
         ref_end_indexes = np.argmin(np.abs(DISTANCE_ENCODING - np.asarray(ref_ends).reshape(-1,1)), axis=1) + 1
         start_indexes = np.argmin(np.abs(DISTANCE_ENCODING - np.asarray(starts).reshape(-1,1)),axis=1)
         end_indexes = start_indexes + (ref_end_indexes - ref_start_indexes)
+        self.cache[mode+'_rolls'] = start_indexes - ref_start_indexes
         return ref_start_indexes, ref_end_indexes, start_indexes, end_indexes
     
 
