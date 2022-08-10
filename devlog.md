@@ -1,6 +1,9 @@
+### 08/10/22:
+- cleaning up the EchoVR. Working on the attenuation today!
+
+
 #### 08/03/22:
 - Start working on porting echoVR
-
 
 ### 08/02/22:
 - Adding some arena building Utils [PROTOTYPING]
