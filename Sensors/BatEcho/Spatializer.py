@@ -94,16 +94,18 @@ class Retriever:
             
 
     def _get_snip(self, objects):
-        ref_objects = np.copy(objects)
+        ref_objects = np.empty(objects.shape)
         masks = np.empty((len(objects), self.raw_length))
         temp_indexes = objects[:,2]==self.objects_dict['pole']
         masks[ temp_indexes ] = self._pole_mask(objects[ temp_indexes][:,0])
-        ref_objects[temp_indexes][:,0] = self.cache['pole_ref_distances']
+        ref_objects[temp_indexes] = np.hstack((self.cache['pole_ref_distances'].reshape(-1,1),
+                                               objects[temp_indexes][:,1:3]))
         temp_indexes = objects[:,2]==self.objects_dict['plant']
         masks[ temp_indexes ] = self._plant_mask(objects[ temp_indexes][:,0])
-        ref_objects[temp_indexes][:,0] = self.cache['plant_ref_distances']
+        ref_objects[temp_indexes] = np.hstack((self.cache['plant_ref_distances'].reshape(-1,1),
+                                               objects[temp_indexes][:,1:3]))
         left_echoes, right_echoes = self._get_angle_interpolated_reference(ref_objects)
-        return mask*left_echoes, mask*right_echoes
+        return masks*left_echoes, masks*right_echoes
 
 
     def _pole_mask(self, distances):
@@ -129,13 +131,13 @@ class Retriever:
         attenuations = []
         for from_dist, to_dist in zip(ref_distances, to_distances):
             atmospheric = np.power(10, -self.air_absorption*2*(to_dist[0] - from_dist[0])/20)
-            spreading = np.divide(from_dist , to_dist) ** (self.outward_spreading_factor + self.inward_spreading_factor)
+            spreading = np.divide(from_dist , to_dist) ** (self.outward_spread_factor + self.inward_spread_factor)
             attenuations.append(atmospheric * spreading)
-        return attentuations
+        return attenuations
 
 
     def _get_ref_indexes(self, distances, mode):
-        start_dict, end_dict = self.pole_starts, self.pole_ends if mode=='pole' else self.plant_starts, self.plant_ends
+        start_dict, end_dict = (self.pole_starts,self.pole_ends) if mode=='pole' else (self.plant_starts,self.plant_ends)
         ref_starts, starts, ref_ends = [],[],[]
         ref_distances = self._calc_ref_distances(distances, mode=mode)
         for ref, dist in zip(ref_distances, distances):
@@ -183,7 +185,7 @@ class Render:
         left_echoes, right_echoes = self.fetch._propagate_snip(left_echoes, right_echoes, objects)
         left_scene = left_bg + np.sum(left_echoes, axis=0)
         right_scene= right_bg +np.sum(right_echoes,axis=0)
-        scence = {'left':left_scene, 'right':right_scene}
+        scene = {'left':left_scene.reshape(-1,), 'right':right_scene.reshape(-1,)}
         return scene
 
 
