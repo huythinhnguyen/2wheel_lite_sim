@@ -1,3 +1,7 @@
+### 08/11/22:
+- Yesterday, finished building the Spatializer. --> Need testing.
+- Build some environment helper next.
+
 ### 08/10/22:
 - cleaning up the EchoVR. Working on the attenuation today!
 
