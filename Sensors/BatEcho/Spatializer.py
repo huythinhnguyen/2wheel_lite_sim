@@ -177,16 +177,40 @@ class Retriever:
 class Render:
     def __init__(self):
         self.fetch = Retriever()
+        self.cochlear = Cochlear.CochlearFilter()
+        self.cache = {}
 
 
-    def objects_to_scene(self, objects):
+    def _objects_to_scene(self, objects):
         left_bg, right_bg = self.fetch._get_background()
         left_echoes, right_echoes = self.fetch._get_snip(objects)
         left_echoes, right_echoes = self.fetch._propagate_snip(left_echoes, right_echoes, objects)
         left_scene = left_bg + np.sum(left_echoes, axis=0)
         right_scene= right_bg +np.sum(right_echoes,axis=0)
         scene = {'left':left_scene.reshape(-1,), 'right':right_scene.reshape(-1,)}
+        self.cache['left_echoes'] = left_echoes
+        self.cache['right_echoes']= right_echoes 
         return scene
+
+
+    def _envelope(self, scene):
+        envelope = {}
+        for key, val in zip(scene.keys(), scene.values()):
+            envelope[key] = self.cochlear.transform(val)
+        return envelope
+
+
+    def _rad2degree(self,objects):
+        rad = objects[:,1]
+        deg = np.degrees(rad)
+        deg[deg>=180] = deg[deg>=180] - 360
+        deg[deg<-180] = deg[deg>-180] + 360
+        objects[:,1] = deg
+        return objects
+
+    
+    def _reset(self):
+        self.cache.clear()
 
 
 _POLE_STARTS  = {0.25: 0.13, 0.5: 0.38, 0.75: 0.62, 1.0: 0.88, 1.25: 1.12, 1.5: 1.36, 1.75: 1.62, 2.0: 1.87, 2.25: 2.11, 2.5: 2.35}
