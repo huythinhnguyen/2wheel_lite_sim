@@ -36,3 +36,18 @@ class FoV:
         angles[angles>=np.pi] = angles[angles>=np.pi] - 2*np.pi
         angles[angles<-np.pi] = angles[angles<-np.pi] + 2*np.pi
         return angles
+
+
+    def _obscure(self, objects):
+        sortarg = np.argsort(objects[:,1])
+        sorted_objects = objects[sortarg]
+        removed = []
+        for i in range(len(sortarg)-1):
+            objs = sorted_objects[i:i+2]
+            deletion, index = self._pairwise_deletion(obj)
+            if deletion: removed.append(sortarg[i+index])
+        return np.delete(objects, removed, axis=0)
+
+
+    def _pairwise_deletion(obj):
+        pass
