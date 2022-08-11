@@ -80,12 +80,12 @@ class Retriever:
 
     def _propagate_snip(self, left_echoes, right_echoes, objects):
         temp_indexes = objects[:,2]==self.objects_dict['pole']
-        rollings = self.cache{'pole_rolls'}
+        rollings = self.cache['pole_rolls']
         for i, (le,re,r) in enumerate(zip(left_echoes[temp_indexes],right_echoes[temp_indexes],rollings)):
             left_echoes[temp_indexes][i] = np.roll(le, r)
             right_echoes[temp_indexes][i] =np.roll(re, r)
         temp_indexes = objects[:,2]==self.objects_dict['plant']
-        rollings = self.cache{'plant_rolls'}
+        rollings = self.cache['plant_rolls']
         for i, (le,re,r) in enumerate(zip(left_echoes[temp_indexes],right_echoes[temp_indexes],rollings)):
             left_echoes[temp_indexes][i] = np.roll(le, r)
             right_echoes[temp_indexes][i] =np.roll(re, r)
@@ -106,7 +106,7 @@ class Retriever:
 
     def _pole_mask(self, distances):
         ref_start_indexes, ref_end_indexes, start_indexes, end_indexes = self._get_ref_indexes(distances, mode='pole')
-         mask = np.zeros((len(distances),self.raw_length))
+        mask = np.zeros((len(distances),self.raw_length))
         attenuations = self._attenuation(ref_start_indexes, ref_end_indexes, start_indexes, end_indexes)
         for i, (s, e, attn) in enumerate(zip(ref_start_indexes, ref_end_indexes, attenuations)):
             mask[i][s:e] = attn
