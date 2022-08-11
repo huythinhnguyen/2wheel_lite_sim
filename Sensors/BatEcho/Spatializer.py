@@ -94,13 +94,15 @@ class Retriever:
             
 
     def _get_snip(self, objects):
-        #objects = objects[ np.argsort(objects[:,2]) ]
-        left_echoes, right_echoes = self._get_angle_interpolated_reference(objects)
-        masks = np.empty(left_echoes.shape)
+        ref_objects = np.copy(objects)
+        masks = np.empty((len(objects), self.raw_length))
         temp_indexes = objects[:,2]==self.objects_dict['pole']
         masks[ temp_indexes ] = self._pole_mask(objects[ temp_indexes][:,0])
+        ref_objects[temp_indexes][:,0] = self.cache['pole_ref_distances']
         temp_indexes = objects[:,2]==self.objects_dict['plant']
         masks[ temp_indexes ] = self._plant_mask(objects[ temp_indexes][:,0])
+        ref_objects[temp_indexes][:,0] = self.cache['plant_ref_distances']
+        left_echoes, right_echoes = self._get_angle_interpolated_reference(ref_objects)
         return mask*left_echoes, mask*right_echoes
 
 
@@ -158,6 +160,7 @@ class Retriever:
         comparison_matrix = (distances.reshape(-1,1) >= bar) ^ np.roll(( distances.reshape(-1,1) >= bar), -1)
         comparison_matrix[:,-1] = False
         result = np.clip(comparison_matrix @ bar, min(standards), max(standards))
+        self.cache[mode+'_ref_distances'] = result
         return result
     
 
