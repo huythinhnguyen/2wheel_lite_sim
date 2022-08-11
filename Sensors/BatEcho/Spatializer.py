@@ -3,7 +3,7 @@ Spatializer reference sounds into scence when given locations of sound sources
 """
 
 import numpy as np
-from . import Cochlear
+from . import Cochlear, Compressors
 import sys
 import os
 
@@ -175,11 +175,25 @@ class Retriever:
         
 
 class Render:
-    def __init__(self):
+    def __init__(self, n_sample=125):
         self.fetch = Retriever()
         self.cochlear = Cochlear.CochlearFilter()
+        self.compressor = Compressors.Subsample(n_sample)
         self.cache = {}
 
+
+    def get_envelope(self, objects, radians=True):
+        if radians: objects = self._rad2deg(objects)
+        scene = self._objects_to_scene(objects)
+        envelope = self._envelope(scene)
+        return envelope
+
+
+    def get_compressed(self, objects, radians=True):
+        envelope = self.get_envelope(self, objects, radians=radians)
+        compressed_input = self._compress(envelope)
+        return compressed_input
+        
 
     def _objects_to_scene(self, objects):
         left_bg, right_bg = self.fetch._get_background()
@@ -200,7 +214,14 @@ class Render:
         return envelope
 
 
-    def _rad2degree(self,objects):
+    def _compress(self, envelope):
+        compressed_input = {}
+        for key, val in zip(envelope.keys(), envelope.values()):
+            compressed_input[key] = self.compressor.transform(val)
+        return compressed_input
+    
+
+    def _rad2deg(self,objects):
         rad = objects[:,1]
         deg = np.degrees(rad)
         deg[deg>=180] = deg[deg>=180] - 360
