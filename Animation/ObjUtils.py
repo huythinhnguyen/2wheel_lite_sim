@@ -47,16 +47,16 @@ class Agent:
 class Food:
     def __init__(self):
         self.food_color = 'tomato'
-        self.food_width = 0.4
-        self.food_alpha = 0.8
+        self.food_width = 0.2
+        self.food_alpha = 0.4
 
 
     def plot(self, ax, foods):
         if foods.shape[1] == 3:
             foods = foods[:,:2]
-        for i in range(foods.shape[0]):
-            ax.add_artist(plt.Circle(foods[i],self.food_width, alpha=self.food_alpha))
-            return ax
+        for f in foods:
+            ax.add_artist(plt.Circle(f,self.food_width, alpha=self.food_alpha))            
+        return ax
             
 
 class Plant:
@@ -64,7 +64,7 @@ class Plant:
         self.leave_shape = [(5,1,0),(5,1,11),(5,1,22),(5,1,33)]
         self.leave_alpha = 0.3
         self.leave_color = 'tab:green'
-        self.leave_size = 50
+        self.leave_size = 40
         self.plant_width = 0.0
 
         
