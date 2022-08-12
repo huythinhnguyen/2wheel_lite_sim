@@ -10,8 +10,8 @@ class FoV:
         if pose is None: pose = np.zeros(3)
 
         
-    def _in_view_filter(self, objects, pose=None):
-        objects = self._polar_objects(objects,pose)
+    def _in_view_filter(self, objects, pose=None, input_format='cartesian'):
+        if input_format=='cartesian': objects = self._polar_objects(objects,pose)
         conditions = (objects[:,0]<self.linear) & \
             (objects[:,1]>=self.angular_range[0]) & \
             (objects[:,1]<=self.angular_range[1])
@@ -25,7 +25,7 @@ class FoV:
 
 
     def _polar_objects(self, objects, pose=None):
-        if pose not None: self._update_pose(pose)
+        if pose is not None: self._update_pose(pose)
         A = objects[:,:2] - self.pose[:2]
         B = np.empty(A.shape)
         B[:,0] = np.linalg.norm(A, axis=1)
