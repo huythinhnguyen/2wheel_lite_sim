@@ -1,3 +1,7 @@
+### 08/12/22:
+- Yesterday. Finished all including FoV --> But need to test FoV.
+- Also, working on the obscursion today!
+
 ### 08/11/22:
 - Yesterday, finished building the Spatializer. --> Need testing.
 - Build some environment helper next.
