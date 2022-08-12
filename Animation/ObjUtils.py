@@ -61,7 +61,7 @@ class Food:
 
 class Plant:
     def __init__(self):
-        self.leave_shape = [(5,1,0),(5,1,11),(5,1,22),(5,1,33)]
+        self.leave_shape = [(5,1,0),(5,1,12),(5,1,24),(5,1,36)]
         self.leave_alpha = 0.3
         self.leave_color = 'tab:green'
         self.leave_size = 40
