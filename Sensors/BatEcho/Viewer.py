@@ -5,7 +5,8 @@ class FoV:
     def __init__(self, pose=None, linear=3., angular=np.pi/2):
         self.linear = linear
         self.angular_range = [-0.5*angular, 0.5*angular]
-        self.objects_diameter{'pole': 0.1, 'plant': 0.3}
+        self.objects_diameter={'pole': 0.1, 'plant': 0.3}
+        self.objects_dict={'pole':1, 'plant':2}
         if pose is None: pose = np.zeros(3)
 
         
@@ -39,15 +40,20 @@ class FoV:
 
 
     def _obscure(self, objects):
-        sortarg = np.argsort(objects[:,1])
-        sorted_objects = objects[sortarg]
+        sortarg = np.argsort(objects[:,0])
+        distances = objects[sortarg][:,0]
+        angles = objects[sortarg][:,1]
+        klasses = objects[sortarg][:,2]
+        diameters = []
+        for k in klass:
+            dia_temp=self.objects_diameter[list(self.objects_dict.keys())[list(self.objects_dict.values()).index(k)]]
+            diameters.append(dia_temp)
+        diameters = np.asarray(diameters)
+        da = np.arcsin(np.divide(diameters, 2*distances))
         removed = []
-        for i in range(len(sortarg)-1):
-            objs = sorted_objects[i:i+2]
-            deletion, index = self._pairwise_deletion(obj)
-            if deletion: removed.append(sortarg[i+index])
+        for i, (a, delta) in enumerate(zip(angles, da)):
+            if i == len(angles) - 1: break
+            for a2, delta2, idx2 in zip(angles[i:], da[i:], sortarg[i:]):
+                condition =((a2-delta2)>=(a-delta))and((a2+delta2)<=(a-delta))
+                if condition: removed.append(idx2)
         return np.delete(objects, removed, axis=0)
-
-
-    def _pairwise_deletion(obj):
-        pass
