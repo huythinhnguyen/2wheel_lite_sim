@@ -1,3 +1,6 @@
+### 08/13/22:
+- Everything tested. Working on the Sensorimotor loop next!!! Make sure to have it independent from EchoVR. and take only the compressed input.
+
 ### 08/12/22:
 - Yesterday. Finished all including FoV --> But need to test FoV.
 - Also, working on the obscursion today!
