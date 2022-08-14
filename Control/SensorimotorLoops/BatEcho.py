@@ -12,6 +12,12 @@ class Avoid:
         self.window_size=10
 
 
+    def _get_onset_distance(self,inp):
+        if type(inp)==tuple or type(inp)==list: left, right = inp
+        elif type(inp)==dict: left, right = inp.values()
+        ### COME BACK HERE!!!!
+
+
 class Approach:
     def __init__(self):
         pass
