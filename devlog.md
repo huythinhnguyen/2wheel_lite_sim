@@ -1,5 +1,6 @@
 ### 08/13/22:
 - Everything tested. Working on the Sensorimotor loop next!!! Make sure to have it independent from EchoVR. and take only the compressed input.
+- >>> Not much done today but working on cleaning the _get_onset_distance now. away to not constantly retrieving and BG echos.
 
 ### 08/12/22:
 - Yesterday. Finished all including FoV --> But need to test FoV.
