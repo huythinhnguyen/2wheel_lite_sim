@@ -57,7 +57,7 @@ class Retriever:
 
     def _get_data_path(self,distance,angle,klass):
         d = str(np.round(float(distance),2))
-        a = str(np.round(float(angle) ))
+        a = str(np.round(float(angle) )) if angle!=0 else str(float(0.0))
         k = list(self.objects_dict.keys())[list(self.objects_dict.values()).index(int(klass))]
         path = os.path.join(self.DATAROOT,k,d+'_'+a)
         return path
