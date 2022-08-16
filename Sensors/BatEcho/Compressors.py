@@ -1,13 +1,14 @@
 import numpy as np
-from .Spatializer import DISTANCE_ENCODING
+from . import Setting
+
 
 class Subsample:
-    def __init__(self, n_sample=125, quiet_threshold=0.7, truncate=0): # n_sample=140
+    def __init__(self, n_sample=Setting.N_SAMPLE, quiet_threshold=Setting.QUIET_THRESHOLD, truncate=0): # n_sample=140
         self.n_sample = n_sample
         self.quiet_threshold = quiet_threshold
         self.quiet = True
         self.truncate = truncate
-        self.DISTANCE_REFERENCE = np.mean(DISTANCE_ENCODING.reshape(-1,self.n_sample),
+        self.DISTANCE_REFERENCE = np.mean(Setting.DISTANCE_ENCODING.reshape(-1,self.n_sample),
                                           axis=1)[:int(self.n_sample-self.truncate)]
 
 
