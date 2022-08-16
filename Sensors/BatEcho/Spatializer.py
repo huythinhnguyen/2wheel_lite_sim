@@ -172,7 +172,7 @@ class Retriever:
         
 
 class Render:
-    def __init__(self, n_sample=125):
+    def __init__(self, n_sample=Setting.N_SAMPLE):
         self.fetch = Retriever()
         self.cochlear = Cochlear.CochlearFilter()
         self.compressor = Compressors.Subsample(n_sample)
@@ -187,7 +187,7 @@ class Render:
 
 
     def get_compressed(self, objects, radians=True):
-        envelope = self.get_envelope(self, objects, radians=radians)
+        envelope = self.get_envelope(objects, radians=radians)
         compressed_input = self._compress(envelope)
         return compressed_input
         
@@ -219,6 +219,7 @@ class Render:
     
 
     def _rad2deg(self,objects):
+        if len(objects) == 0: return np.asarray(objects).reshape(-1,3)
         rad = objects[:,1]
         deg = np.degrees(rad)
         deg[deg>=180] = deg[deg>=180] - 360
