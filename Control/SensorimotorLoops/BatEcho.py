@@ -15,7 +15,8 @@ del garbage
 
 
 class Cue:
-    def __init__(self, background = None):
+    def __init__(self, background = None,):
+        self.bot_convert = config.ROBOT_CONVERSION
         self.DISTANCE_REFERENCE = Setting.COMPRESSED_DISTANCE_ENCODING
         self.window_size=10
         self.emission_encoding = Setting.EMISSION_ENCODING
@@ -26,6 +27,12 @@ class Cue:
         else:
             if type(background)==tuple or type(background)==list: self.left_bg, self.right_bg = background
             elif type(background)==dict: self.left_bg, self.right_bg = background.values()
+
+        self.max_linear_velocity = config.MAX_LINEAR_VELOCITY if self.bot_convert else config.ROBOT_MAX_LINEAR_VELOCITY
+        self.max_angular_velocity= config.MAX_ANGULAR_VELOCITY if self.bot_convert else config.ROBOT_MAX_ANGULAR_VELOCITY
+        self.cruise_threshold = config.CRUISE_THRESHOLD
+
+
         self.cache = {}
 
 
@@ -33,10 +40,10 @@ class Cue:
         onset_distance, onset_index = self._get_onset(input_echoes).values()
         left_loudness = self._calc_window_loudness(input_echoes['left'], onset_index)
         right_loudness= self._calc_window_loudness(input_echoes['right'], onset_index)
-        IID = self._calc_idd(self, left_loudness, right_loudness)
+        IID = self._calc_iid(left_loudness, right_loudness)
         cues = {'onset_distance': onset_distance,
                 'onset_index': onset_index,
-                'left_loudness': left_loundness,
+                'left_loudness': left_loudness,
                 'right_loudness': right_loudness,
                 'IID': IID }
         if cache: self.cache = cues.copy()
@@ -48,7 +55,7 @@ class Cue:
         elif type(inp)==dict: left, right = inp.values()
         onset_index = np.argmax( (left - self.left_bg) > self.onset_threshold )
         onset_index = np.min([onset_index, np.argmax((right - self.right_bg) > self.onset_threshold)])
-        onset_distance = self.DISTANCE_REFERENCE[onset_distance]
+        onset_distance = self.DISTANCE_REFERENCE[onset_index]
         onset = {'distance': onset_distance, 'index': onset_index}
         return onset
 
@@ -68,17 +75,7 @@ class Cue:
         
 
 class Avoid(Cue):
-    def __init__(self, bot_convert = config.ROBOT_CONVERSION):
-        self.bot_convert = bot_convert
-        self.max_linear_velocity = config.MAX_LINEAR_VELOCITY if self.bot_convert else config.ROBOT_MAX_LINEAR_VELOCITY
-        self.max_angular_velocity= config.MAX_ANGULAR_VELOCITY if self.bot_convert else config.ROBOT_MAX_ANGULAR_VELOCITY
-        self.cruise_threshold = config.CRUISE_THRESHOLD
-
+    pass
 
 class Approach(Cue):
-    def __init__(self, bot_convert = config.ROBOT_CONVERSION):
-        self.bot_convert = bot_convert
-        self.max_linear_velocity = config.MAX_LINEAR_VELOCITY if self.bot_convert else config.ROBOT_MAX_LINEAR_VELOCITY
-        self.max_angular_velocity= config.MAX_ANGULAR_VELOCITY if self.bot_convert else config.ROBOT_MAX_ANGULAR_VELOCITY
-        self.cruise_threshold = config.CRUISE_THRESHOLD
-
+    pass
