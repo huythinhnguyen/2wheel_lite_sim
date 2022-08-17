@@ -1,8 +1,8 @@
 import numpy as np
-
+from . import Setting
 
 class FoV:
-    def __init__(self, pose=None, linear=10., angular=np.pi/2):
+    def __init__(self, pose=None, linear=Setting.FOV_LINEAR, angular=FOV_ANGULAR):
         self.linear = linear
         self.angular_range = [-0.5*angular, 0.5*angular]
         self.objects_diameter={'pole': 0.1, 'plant': 0.3}

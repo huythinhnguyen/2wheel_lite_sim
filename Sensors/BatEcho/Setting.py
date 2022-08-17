@@ -23,9 +23,12 @@ COMPRESSED_DISTANCE_ENCODING = np.mean(DISTANCE_ENCODING.reshape(-1,N_SAMPLE), a
 COMPRESSOR_NORMALIZED = False
 QUIET_NORMALIZER = 8e-2
 
+### VIEWER SETTING:
+FOV_LINEAR_RANGE = 3.
+FOV_ANGULAR_RANGE= 0.5*np.pi
+
 
 """ ECHOES MARKER  """ # COMMENT OUT WHEN NOT USED OR UPDATED
-
 ##################################
 ### 1ED, TRIPOD MOUNTED SENSOR ###
 ##################################
