@@ -8,6 +8,7 @@ class FoV:
         self.objects_diameter={'pole': 0.1, 'plant': 0.3}
         self.objects_dict={'pole':1, 'plant':2}
         if pose is None: pose = np.zeros(3)
+        self.cache = []
 
 
     def view(self, objects, pose=None, input_format='cartesian', output_format='cartesian'):
@@ -15,7 +16,9 @@ class FoV:
         objects = self._obscure(objects)
         if output_format=='cartesian':
             return self._pol2cart(objects)
-        else: return objects
+        else:
+            self.cache = np.copy(self._pol2cart(objects))
+            return objects
         
         
     def _in_view_filter(self, objects, pose=None, input_format='cartesian', output_format='cartesian'):
@@ -26,7 +29,8 @@ class FoV:
         inview = objects[conditions]
         if output_format=='cartesian':
             return self._pol2cart(inview)
-        else: return inview
+        else:
+            return inview
 
 
     def _update_pose(self, pose):
@@ -44,12 +48,13 @@ class FoV:
 
 
     def _pol2cart(self, objects, pose=None):
+        result = np.empty(objects.shape)
         if pose is not None: self._update_pose(pose)
         xls =(objects[:,0] * np.cos(objects[:,1])) + self.pose[0]
         yls =(objects[:,0] * np.sin(objects[:,1])) + self.pose[1]
-        objects[:,0] = xls
-        objects[:,1] = yls
-        return objects
+        result[:,0] = xls
+        result[:,1] = yls
+        return result
 
 
     def _wrap2pi(self, angles):
