@@ -75,7 +75,40 @@ class Cue:
         
 
 class Avoid(Cue):
-    pass
+    def get_kinematic(self, input_echoes):
+        cues = self.get_cues(input_echoes)
+        v = self._get_linear_velocity(cues)
+        omega = self._get_angular_velocity(cues)
+        return v, omega
 
+
+    def _get_linear_velocity(self,cues):
+        distance = cues['onset_distance']
+        v = None # use a kinda sigmoid or tanh function for defining v
+        return v
+
+
+    def _get_angular_velocity(self,cues):
+        iid = cues['IID']
+        distance = cues['distance']
+        omega = None # input function here
+        return omega
+
+    
 class Approach(Cue):
-    pass
+    def get_kinematic(self, input_echoes):
+        cues = self.get_cues(input_echoes)
+        v = self._get_linear_velocity(cues)
+        omega = self._get_angular_velocity(cues)
+        return v, omega
+
+
+    def _get_linear_velocity(self,cues):
+
+        return v
+
+
+    def _get_angular_velocity(self,cues):
+
+        return omega
+    
