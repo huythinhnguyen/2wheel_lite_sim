@@ -2,7 +2,7 @@ import numpy as np
 import sys
 import os
 
-sys.path.append(os.path.dirname(os.path.abspath(__path__)) + '/./Sensors/BatEcho/')
+sys.path.append(os.path.dirname(os.path.abspath(__file__)) + '/../../')
 
 from Sensors.BatEcho import Setting, Spatializer
 from . import Setting as config
