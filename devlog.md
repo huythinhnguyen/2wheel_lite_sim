@@ -1,5 +1,8 @@
+### 08/17/22:
+- Try to Finish the Cue and the Avoidance loops. Test the Cue completely first!
+
 ### 08/16/22:
-- Working on _get_onset_distance
+- Working on _get_onset_distance. Finished need test.
 
 ### 08/13/22:
 - Everything tested. Working on the Sensorimotor loop next!!! Make sure to have it independent from EchoVR. and take only the compressed input.
