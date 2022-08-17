@@ -1,5 +1,6 @@
 ### 08/17/22:
-- Try to Finish the Cue and the Avoidance loops. Test the Cue completely first!
+- Try to Finish the Cue and the Avoidance loops. Tested Cues
+- Need to work on the Avoid v, omega function
 
 ### 08/16/22:
 - Working on _get_onset_distance. Finished need test.
