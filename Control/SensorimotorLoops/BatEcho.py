@@ -85,7 +85,8 @@ class Avoid(Cue):
         self.bot_convert = config.ROBOT_CONVERSION
         self.max_linear_velocity = config.MAX_LINEAR_VELOCITY if self.bot_convert else config.ROBOT_MAX_LINEAR_VELOCITY
         self.max_angular_velocity= config.MAX_ANGULAR_VELOCITY if self.bot_convert else config.ROBOT_MAX_ANGULAR_VELOCITY
-        self.cruise_threshold = config.CRUISE_THRESHOLD
+        self.A = config.DECELERATION_FACTOR
+        self.K = 0.1
 
     
     def get_kinematic(self, input_echoes):
@@ -97,7 +98,8 @@ class Avoid(Cue):
 
     def _get_linear_velocity(self,cues):
         distance = cues['onset_distance']
-        v = None # use a kinda sigmoid or tanh function for defining v
+        v = self.max_linear_velocity*(1 - np.power((1-self.K*self.A*distance),1/self.K-1))
+        if v>self.max_linear_velocity: v=self.max_linear_velocity
         return v
 
 
@@ -114,8 +116,8 @@ class Approach(Cue):
         self.bot_convert = config.ROBOT_CONVERSION
         self.max_linear_velocity = config.MAX_LINEAR_VELOCITY if self.bot_convert else config.ROBOT_MAX_LINEAR_VELOCITY
         self.max_angular_velocity= config.MAX_ANGULAR_VELOCITY if self.bot_convert else config.ROBOT_MAX_ANGULAR_VELOCITY
-        self.cruise_threshold = config.CRUISE_THRESHOLD
-
+        self.A = config.DECELERATION_FACTOR
+        self.K = 0.1
     
     def get_kinematic(self, input_echoes):
         cues = self.get_cues(input_echoes)
@@ -125,9 +127,11 @@ class Approach(Cue):
 
 
     def _get_linear_velocity(self,cues):
-        
+        distance = cues['onset_distance']
+        v = self.max_linear_velocity*(1 - np.power((1-self.K*self.A*distance),1/self.K-1))
+        if v>self.max_linear_velocity: v=self.max_linear_velocity
         return v
-
+    
 
     def _get_angular_velocity(self,cues):
 
