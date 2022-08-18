@@ -13,10 +13,20 @@ garbage = [render]
 del render
 del garbage
 
+"""
+reference:
+Lee, David (1992): Common principle of guidance of echolocation and vision
+Padfield, Gareth (2011): The tau of flight control
+--> Derived the linear velocity profile to be:
+v = v_max * K(d), v[v>v_max] = v_max
+K(d) = 1 - (1 - k*a*d)^(k^-1 - 1)
+v: velocity, k = 0.1, 0.2 --> others are not computation --> power result is imaginary number
+a = between 1-9 but found optimal around 2,3 as a larger a is the stepper the decellaration
+"""
+
 
 class Cue:
     def __init__(self, background = None,):
-        self.bot_convert = config.ROBOT_CONVERSION
         self.DISTANCE_REFERENCE = Setting.COMPRESSED_DISTANCE_ENCODING
         self.window_size=10
         self.emission_encoding = Setting.EMISSION_ENCODING
@@ -27,11 +37,6 @@ class Cue:
         else:
             if type(background)==tuple or type(background)==list: self.left_bg, self.right_bg = background
             elif type(background)==dict: self.left_bg, self.right_bg = background.values()
-
-        self.max_linear_velocity = config.MAX_LINEAR_VELOCITY if self.bot_convert else config.ROBOT_MAX_LINEAR_VELOCITY
-        self.max_angular_velocity= config.MAX_ANGULAR_VELOCITY if self.bot_convert else config.ROBOT_MAX_ANGULAR_VELOCITY
-        self.cruise_threshold = config.CRUISE_THRESHOLD
-
 
         self.cache = {}
 
@@ -75,6 +80,14 @@ class Cue:
         
 
 class Avoid(Cue):
+    def __init__(self, background=None):
+        super().__init__(background)
+        self.bot_convert = config.ROBOT_CONVERSION
+        self.max_linear_velocity = config.MAX_LINEAR_VELOCITY if self.bot_convert else config.ROBOT_MAX_LINEAR_VELOCITY
+        self.max_angular_velocity= config.MAX_ANGULAR_VELOCITY if self.bot_convert else config.ROBOT_MAX_ANGULAR_VELOCITY
+        self.cruise_threshold = config.CRUISE_THRESHOLD
+
+    
     def get_kinematic(self, input_echoes):
         cues = self.get_cues(input_echoes)
         v = self._get_linear_velocity(cues)
@@ -96,6 +109,14 @@ class Avoid(Cue):
 
     
 class Approach(Cue):
+    def __init__(self, background=None):
+        super().__init__(background)
+        self.bot_convert = config.ROBOT_CONVERSION
+        self.max_linear_velocity = config.MAX_LINEAR_VELOCITY if self.bot_convert else config.ROBOT_MAX_LINEAR_VELOCITY
+        self.max_angular_velocity= config.MAX_ANGULAR_VELOCITY if self.bot_convert else config.ROBOT_MAX_ANGULAR_VELOCITY
+        self.cruise_threshold = config.CRUISE_THRESHOLD
+
+    
     def get_kinematic(self, input_echoes):
         cues = self.get_cues(input_echoes)
         v = self._get_linear_velocity(cues)
@@ -104,7 +125,7 @@ class Approach(Cue):
 
 
     def _get_linear_velocity(self,cues):
-
+        
         return v
 
 
