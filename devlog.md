@@ -1,3 +1,7 @@
+### 08/18/22:
+- Put the kinematic velocity profile equation into the Sensory motor loop.
+- Test independent strategy. Make some nice publishable figure!
+
 ### 08/17/22:
 - Try to Finish the Cue and the Avoidance loops. Tested Cues
 - Need to work on the Avoid v, omega function
