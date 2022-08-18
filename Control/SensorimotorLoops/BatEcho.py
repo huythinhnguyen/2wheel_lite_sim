@@ -85,6 +85,7 @@ class Avoid(Cue):
         self.bot_convert = config.ROBOT_CONVERSION
         self.max_linear_velocity = config.MAX_LINEAR_VELOCITY if self.bot_convert else config.ROBOT_MAX_LINEAR_VELOCITY
         self.max_angular_velocity= config.MAX_ANGULAR_VELOCITY if self.bot_convert else config.ROBOT_MAX_ANGULAR_VELOCITY
+        self.linear_velo_offset = config.LINEAR_VELOCITY_OFFSET
         self.A = config.DECELERATION_FACTOR
         self.K = 0.1
 
@@ -98,10 +99,12 @@ class Avoid(Cue):
 
     def _get_linear_velocity(self,cues):
         distance = cues['onset_distance']
-        v = self.max_linear_velocity*(1 - np.power((1-self.K*self.A*distance),1/self.K-1))
+        v = (self.max_linear_velocity - self.linear_velo_offset)*\
+            (1 - np.power((1-self.K*self.A*distance),1/self.K-1)) \
+            + self.linear_velo_offset
         if v>self.max_linear_velocity: v=self.max_linear_velocity
         return v
-
+    
 
     def _get_angular_velocity(self,cues):
         iid = cues['IID']
@@ -116,6 +119,7 @@ class Approach(Cue):
         self.bot_convert = config.ROBOT_CONVERSION
         self.max_linear_velocity = config.MAX_LINEAR_VELOCITY if self.bot_convert else config.ROBOT_MAX_LINEAR_VELOCITY
         self.max_angular_velocity= config.MAX_ANGULAR_VELOCITY if self.bot_convert else config.ROBOT_MAX_ANGULAR_VELOCITY
+        self.linear_velo_offset = config.LINEAR_VELOCITY_OFFSET
         self.A = config.DECELERATION_FACTOR
         self.K = 0.1
     
@@ -128,7 +132,9 @@ class Approach(Cue):
 
     def _get_linear_velocity(self,cues):
         distance = cues['onset_distance']
-        v = self.max_linear_velocity*(1 - np.power((1-self.K*self.A*distance),1/self.K-1))
+        v = (self.max_linear_velocity - self.linear_velo_offset)*\
+            (1 - np.power((1-self.K*self.A*distance),1/self.K-1)) \
+            + self.linear_velo_offset
         if v>self.max_linear_velocity: v=self.max_linear_velocity
         return v
     
