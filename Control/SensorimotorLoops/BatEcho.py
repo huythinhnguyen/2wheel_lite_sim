@@ -1,3 +1,4 @@
+
 import numpy as np
 import sys
 import os
@@ -22,6 +23,9 @@ v = v_max * K(d), v[v>v_max] = v_max
 K(d) = 1 - (1 - k*a*d)^(k^-1 - 1)
 v: velocity, k = 0.1, 0.2 --> others are not computation --> power result is imaginary number
 a = between 1-9 but found optimal around 2,3 as a larger a is the stepper the decellaration
+Angular Velocity for Avoid is defined by conservation of momentum
+omega = v/r = v^2 / (v_max - v)
+
 """
 
 
@@ -88,6 +92,8 @@ class Avoid(Cue):
         self.linear_velo_offset = config.LINEAR_VELOCITY_OFFSET
         self.A = config.DECELERATION_FACTOR
         self.K = 0.1
+        self.g = 9.8
+        self.centri_accel = 1*self.g
 
     
     def get_kinematic(self, input_echoes):
@@ -106,12 +112,29 @@ class Avoid(Cue):
         return v
     
 
-    def _get_angular_velocity(self,cues):
+    def _get_angular_velocity(self,cues, v=None):
         iid = cues['IID']
-        distance = cues['distance']
-        omega = None # input function here
+        if v is None:
+            v = self._get_linear_velocity(cues)
+        omega = v**2 / (self.max_linear_velocity - v)
         return omega
 
+
+    def _plan_A(self, v, iid):
+        R_min = np.power(v,2) / self.centri_accel
+        omega = np.sign(iid) * (v/R_min)
+        return omega
+
+
+    def _plan_B(self, v, iid, onset_distance):
+        R_min = np.power(v,2) / self.centri_accel
+        omega = np.sign(iid) * (v/R_min) * np.exp(-1*onset_distance)
+        return omega
+
+
+    def _plan_C(self, v, iid, onset_distance):
+        R_min = np.power(v,2)
+    
     
 class Approach(Cue):
     def __init__(self, background=None):
