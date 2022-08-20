@@ -1,3 +1,10 @@
+### 08/19/22:
+- A few math methods implemented. For the avoidance loop:
+  >> The velocity profile is partially drived from the tau. using the same exponential equation without considering the acceleration term.
+  >> Rmin is derived from velocity by keeping the centrifugal acceleration constant. For now, keep it 1G but can be bring up to 2-3G if sharper turn is needed.
+- 2 simple algorithm is implemented: (1) set turning radius = Rmin, calculate omega=v/r. (2) same with (1) but multiplying omega for exp(-d_onset).
+
+
 ### 08/18/22:
 - Put the kinematic velocity profile equation into the Sensory motor loop.
 - Test independent strategy. Make some nice publishable figure!
