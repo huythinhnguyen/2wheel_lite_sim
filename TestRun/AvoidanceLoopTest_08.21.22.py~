@@ -1,0 +1,6 @@
+import numpy as np
+import os
+
+os.chdir(os.path.join(os., '../'))
+
+print('Current working path')
