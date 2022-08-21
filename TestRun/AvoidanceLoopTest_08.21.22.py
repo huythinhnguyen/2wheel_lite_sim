@@ -25,7 +25,8 @@ class Maze:
         if obstacles_type[0]=='pole' : self.spacing = 0.1
         if 'maze_size' in kwargs.keys(): self.maze_size = kwargs['maze_size']
         if 'tunnel_width' in kwargs.keys(): self.tunnel_width=kwargs['tunnel_width']
-
+        if 'cycle_number' in kwargs.keys(): self.cycle_number=kwargs['cycle_number']
+        
 
     def _straight_tunnel(self):
         starts, ends, spacings = [], [], []
@@ -41,4 +42,24 @@ class Maze:
 
 
     def _meandering_tunnel(self):
-        starts, ends, spacings = [],[],[]
+        arcs = np.array([]).reshape(-1,2)
+        for i in range(self.cycle_number):
+            s1u, s1d = [0, self.maze_size/4 + self.tunnel_width/2],[0, self.maze_size/4 - self.tunnel_width/2]
+            e1u, e1d = [self.maze_size/4 + self.tunnel_width/2, 0],[self.maze_size/4 - self.tunnel_width/2, 0]
+            s2u, s2d = e1u.copy(), e1d.copy()
+            e2u, e2d = [3*self.maze_size/4 - self.tunnel_width/2, 0],[3*self.maze_size/4 + self.tunnel_width/2, 0]
+            s3u, s3d = e2u.copy(), e2d.copy()
+            e3u, e3d = [self.maze_size, self.maze_size/4 + self.tunnel_width/2],[self.maze_size, self.maze_size/4 - self.tunnel_width/2]
+            arc1u = Builder.build_arc(s1u,e1u, self.maze_size/4 + self.tunnel_width/2)
+            arc1d = Builder.build_arc(s1d,e1d, self.maze_size/4 - self.tunnel_width/2)
+            arc2u = Builder.build_arc(s2u,e2u, self.maze_size/4 - self.tunnel_width/2)
+            arc2d = Builder.build_arc(s2d,e2d, self.maze_size/4 + self.tunnel_width/2)
+            arc3u = Builder.build_arc(s3u,e3u, self.maze_size/4 + self.tunnel_width/2)
+            arc3d = Builder.build_arc(s3d,e3d, self.maze_size/4 - self.tunnel_width/2)
+            temp = np.vstack((arc1u, arc1d, arc2u, ar2d, arc3u, arc3d))
+            temp[:,0] = temp[:,0] + i * self.maze_size
+            arcs = np.vstack((arcs,temp))
+        return arcs
+
+
+    def
