@@ -51,12 +51,12 @@ class Maze:
             e2u, e2d = [3*self.maze_size/4 - self.tunnel_width/2, 0],[3*self.maze_size/4 + self.tunnel_width/2, 0]
             s3u, s3d = e2u.copy(), e2d.copy()
             e3u, e3d = [self.maze_size, self.maze_size/4 + self.tunnel_width/2],[self.maze_size, self.maze_size/4 - self.tunnel_width/2]
-            arc1u = Builder.build_arc(s1u,e1u, self.maze_size/4 + self.tunnel_width/2, spin=-1)
-            arc1d = Builder.build_arc(s1d,e1d, self.maze_size/4 - self.tunnel_width/2, spin=-1)
-            arc2u = Builder.build_arc(s2u,e2u, self.maze_size/4 - self.tunnel_width/2, spin= 1)
-            arc2d = Builder.build_arc(s2d,e2d, self.maze_size/4 + self.tunnel_width/2, spin= 1)
-            arc3u = Builder.build_arc(s3u,e3u, self.maze_size/4 + self.tunnel_width/2, spin=-1)
-            arc3d = Builder.build_arc(s3d,e3d, self.maze_size/4 - self.tunnel_width/2, spin=-1)
+            arc1u = Builder.build_arc(s1u,e1u, self.maze_size/4 + self.tunnel_width/2, self.spacing, spin=-1)
+            arc1d = Builder.build_arc(s1d,e1d, self.maze_size/4 - self.tunnel_width/2, self.spacing, spin=-1)
+            arc2u = Builder.build_arc(s2u,e2u, self.maze_size/4 - self.tunnel_width/2, self.spacing, spin= 1)
+            arc2d = Builder.build_arc(s2d,e2d, self.maze_size/4 + self.tunnel_width/2, self.spacing, spin= 1)
+            arc3u = Builder.build_arc(s3u,e3u, self.maze_size/4 + self.tunnel_width/2, self.spacing, spin=-1)
+            arc3d = Builder.build_arc(s3d,e3d, self.maze_size/4 - self.tunnel_width/2, self.spacing, spin=-1)
             temp = np.vstack((arc1u, arc1d, arc2u, ar2d, arc3u, arc3d))
             temp[:,0] = temp[:,0] + i * self.maze_size
             arcs = np.vstack((arcs,temp))
@@ -64,7 +64,7 @@ class Maze:
 
 
     def _zigzag_tunnel(self):
-        starts, ends, spacings = [],[],[]
+        starts, ends = [],[]
         primer = [0., 0., 0.]
         starts.append([ primer[0] + (self.tunnel_width/2)*np.cos(primer[2] + np.pi/2),
                         primer[1] + (self.tunnel_width/2)*np.sin(primer[2] + np.pi/2)])
@@ -80,11 +80,38 @@ class Maze:
                         primer[1] + (self.tunnel_width/2)*np.sin(primer[2] - np.pi/2)])
         
         for i in range(self.cycle_number):
-            starts.append([ primer[0] + (self.tunnel_width/2)*np.cos(primer[2] + np.pi/2),
-                            primer[1] + (self.tunnel_width/2)*np.sin(primer[2] + np.pi/2)])
-            starts.append([ primer[0] + (self.tunnel_width/2)*np.cos(primer[2] - np.pi/2),
-                            primer[1] + (self.tunnel_width/2)*np.sin(primer[2] - np.pi/2)])            
+            starts.append(ends[-2])
+            starts.append(ends[-1])            
             primer[0] = primer[0] + np.cos(primer[2])*self.maze_size/4
             primer[1] = primer[1] + np.sin(primer[2])*self.maze_size/4
-            primer[2] = primer[2] + (np.pi - self.zigzag_angle)
-            
+            primer[2] = Builder.wrap2pi(primer[2] + (np.pi - self.zigzag_angle))
+            d = self.tunnel_width/(2*np.cos(0.5*(np.pi - self.zigzag_angle)))
+            ends.append([primer[0]+d*np.cos(Builder.wrap2pi(primer[2] + self.zigzag_angle/2)),
+                         primer[1]+d*np.sin(Builder.wrap2pi(primer[2] + self.zigzag_angle/2))])
+            starts.append(ends[-1])
+            ends.append([primer[0]+d*np.cos(Builder.wrap2pi(primer[2]-(np.pi-self.zigzag_angle/2))),
+                         primer[1]+d*np.sin(Builder.wrap2pi(primer[2]-(np.pi-self.zigzag_angle/2)))])
+            starts.append(ends[-1])
+            primer[0] = primer[0] + np.cos(primer[2])*self.maze_size/2
+            primer[1] = primer[1] + np.sin(primer[2])*self.maze_size/2
+            primer[2] = Builder.wrap2pi(primer[2] - (np.pi - self.zigzag_angle))
+            ends.append([primer[0]+d*np.cos(Builder.wrap2pi(primer[2] + self.zigzag_angle/2)),
+                         primer[1]+d*np.sin(Builder.wrap2pi(primer[2] + self.zigzag_angle/2))])
+            starts.append(ends[-1])
+            ends.append([primer[0]+d*np.cos(Builder.wrap2pi(primer[2]-(np.pi-self.zigzag_angle/2))),
+                         primer[1]+d*np.sin(Builder.wrap2pi(primer[2]-(np.pi-self.zigzag_angle/2)))])
+            starts.append(ends[-1])
+            if i == self.cycle_number - 1:
+                primer[0] = primer[0] + np.cos(primer[2])*self.maze_size/2
+                primer[1] = primer[1] + np.sin(primer[2])*self.maze_size/2
+            else:
+                primer[0] = primer[0] + np.cos(primer[2])*self.maze_size/4
+                primer[1] = primer[1] + np.sin(primer[2])*self.maze_size/4
+                
+            ends.append([primer[0] + (self.tunnel_width/2)*np.cos(primer[2] + np.pi/2),
+                         primer[1] + (self.tunnel_width/2)*np.sin(primer[2] + np.pi/2)])
+            ends.append([primer[0] + (self.tunnel_width/2)*np.cos(primer[2] - np.pi/2),
+                         primer[1] + (self.tunnel_width/2)*np.sin(primer[2] - np.pi/2)])            
+        spacings = np.ones(len(starts))*self.spacings
+        
+        return Builder.build_walls(starts, ends, spacings)
