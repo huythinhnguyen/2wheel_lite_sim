@@ -174,9 +174,15 @@ class Retriever:
 class Render:
     def __init__(self, n_sample=Setting.N_SAMPLE):
         self.fetch = Retriever()
+        self.fov = Viewer.FoV()
         self.cochlear = Cochlear.CochlearFilter()
         self.compressor = Compressors.Subsample(n_sample)
         self.cache = {}
+
+    
+    def run(self, pose, objects, radians=True, cache=True):
+        inview = self.fov.view(objects, pose=pose, output_format='polar')
+        return self.get_compressed(inview,radians=radians,cache=cache)
 
 
     def get_envelope(self, objects, radians=True):
