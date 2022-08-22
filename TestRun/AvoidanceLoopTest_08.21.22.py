@@ -1,7 +1,7 @@
 import numpy as np
 import os
 import sys
-
+import time
 os.chdir(os.path.join(os.path.dirname(os.path.abspath(__file__)), '../'))
 sys.path.append(os.getcwd())
 
@@ -124,18 +124,67 @@ class Recorder:
         self.poses = []
         self.maze = maze
         self.episode = episode
+        self.echoes_L = [] 
+        self.echoes_R = []
+        self.IIDs = []
         self.cache = {}
 
 
 if __name__=='__main__':
     from matplotlib import pyplot as plt
-    from Animation import ObjUtils, Render
-  
-    mazeBuilder = Maze(maze_id='1.a', maze_size=10., tunnel_width=2., cycle_number=3, zigzag_angle=np.pi/2)
-    maze = mazeBuilder._zigzag_tunnel()
-
-    plant = ObjUtils.Plant()
-    fig, ax = plt.subplots()
-    plant.plot(ax, maze)
-    plt.show()
+    from Animation import ObjUtils
+    from Animation.Render import StillImage
+    from Simulation.Motion import State, Drive
+    from Control.SensorimotorLoops.BatEcho import Avoid
+    from Sensors.BatEcho.Spatializer import Render
     
+    mazeBuilder = Maze(maze_id='1.a', maze_size=20., tunnel_width=3.0, cycle_number=1, zigzag_angle=np.pi/4)
+    maze = mazeBuilder._zigzag_tunnel()
+    maze = np.hstack((maze, np.ones(len(maze)).reshape(-1,1)))
+    records={}
+    plans = ['B']
+    for i in range(1):
+        ended = False
+        rec = Recorder(maze, i)
+        bat = State(pose=np.array([1.,0.,0.]), dt=1/50)
+        controller = Avoid()
+        controller.plan = plans[i]
+        render = Render()
+        rec.cache['v'] = []
+        rec.cache['omega'] = []
+        for _ in range(10000):
+            rec.poses.append(bat.pose)
+            echoes = render.run(bat.pose, maze)
+            rec.echoes_L.append(echoes['left'])
+            rec.echoes_R.append(echoes['right'])
+            v, omega = controller.get_kinematic(echoes)
+            rec.cache['v'].append(v)
+            rec.cache['omega'].append(omega)
+            rec.IIDs.append(controller.cache['IID'])
+            bat.update_kinematic(kinematic=[v,omega])
+            bat.update_pose()
+            #print(bat.kinematic)
+            #print('onset',controller.cache['onset_distance'])
+            if bat.pose[0] < 0 or bat.pose[0] > 10: break
+            if np.sum(render.cache['inview'][:,0] < 0.3)>0: break
+        if 'poses' in records: records['poses'].append(rec.poses)
+        else: records['poses'] = [rec.poses]
+
+    for i in range(1):
+        objects = {'plant': maze, 'agent': np.asarray(records['poses'][i])}
+        imager = StillImage(objects_types=['plant', 'agent'], sparseness=200)
+        imager.render(objects)
+        plt.show()
+        time.sleep(1)
+        plt.close()
+
+    np.savez('test_data_08.22.22.npz',
+             poses = np.asarray(rec.poses),
+             echoes_L = np.asarray(rec.echoes_L),
+             echoes_R = np.asarray(rec.echoes_R),
+             v = np.asarray(rec.cache['v']),
+             omega = np.asarray(rec.cache['omega']),
+             iid = np.asarray(rec.IIDs) )
+    
+             
+            

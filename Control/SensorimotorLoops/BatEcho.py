@@ -1,4 +1,3 @@
-
 import numpy as np
 import sys
 import os
@@ -122,18 +121,20 @@ class Avoid(Cue):
             omega = self._plan_A(v, iid)
         elif self.plan=='B':
             omega = self._plan_B(v, iid, cues['onset_distance'])
+        if np.abs(omega) > config.MAX_ANGULAR_VELOCITY:
+            omega = np.sign(omega)*config.MAX_ANGULAR_VELOCITY
         return omega
 
 
     def _plan_A(self, v, iid):
         R_min = np.power(v,2) / self.centri_accel
-        omega = np.sign(iid) * (v/R_min)
+        omega = -np.sign(iid) * (v/R_min)
         return omega
 
 
     def _plan_B(self, v, iid, onset_distance):
         R_min = np.power(v,2) / self.centri_accel
-        omega = np.sign(iid) * (v/R_min) * np.exp(-1*onset_distance)
+        omega = -np.sign(iid) * (v/R_min) * np.exp(-1*onset_distance)
         return omega
 
     
