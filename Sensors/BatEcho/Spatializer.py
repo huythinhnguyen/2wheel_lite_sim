@@ -182,6 +182,7 @@ class Render:
     
     def run(self, pose, objects, radians=True, cache=True):
         inview = self.fov.view(objects, pose=pose, output_format='polar')
+        if cache: self.cache['inview']=inview
         return self.get_compressed(inview,radians=radians,cache=cache)
 
 
