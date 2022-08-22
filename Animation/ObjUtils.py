@@ -8,7 +8,7 @@ class Agent:
     def __init__(self):
         self.arrow_color = 'tab:red'
         self.dot_color = 'tab:orange'
-        self.arrow_length = 1.0
+        self.arrow_length = 0.5
         self.arrow_aspect = 0.005
         self.arrow_width = self.arrow_length * self.arrow_aspect
         self.arrow_alpha = 0.8
