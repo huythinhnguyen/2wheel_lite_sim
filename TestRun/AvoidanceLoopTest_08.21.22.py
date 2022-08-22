@@ -27,7 +27,7 @@ class Maze:
         if 'tunnel_width' in kwargs.keys(): self.tunnel_width=kwargs['tunnel_width']
         if 'cycle_number' in kwargs.keys(): self.cycle_number=kwargs['cycle_number']
         if 'zigzag_angle' in kwargs.keys(): self.zigzag_angle=kwargs['zigzag_angle']
-        
+
 
     def _straight_tunnel(self):
         starts, ends, spacings = [], [], []
@@ -115,3 +115,18 @@ class Maze:
         spacings = np.ones(len(starts))*self.spacings
         
         return Builder.build_walls(starts, ends, spacings)
+
+
+class Recorder:
+    def __init__(self, maze, episode):
+        self.poses = []
+        self.maze = maze
+        self.episode = episode
+        self.cache = {}
+
+
+
+if __name__=='__main__':
+    mazeBuilder = Maze(maze_id='1.a', maze_size=8., tunnel_width=3.)
+    maze = mazeBuilder._straigth_tunnel()
+    
