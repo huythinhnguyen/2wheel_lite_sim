@@ -61,8 +61,11 @@ class Cue:
     def _get_onset(self,inp):
         if type(inp)==tuple or type(inp)==list: left, right = inp
         elif type(inp)==dict: left, right = inp.values()
-        onset_index = np.argmax( (left - self.left_bg) > self.onset_threshold )
-        onset_index = np.min([onset_index, np.argmax((right - self.right_bg) > self.onset_threshold)])
+        onset_index_left = np.argmax( (left - self.left_bg) > self.onset_threshold)
+        onset_index_right= np.argmax( (right-self.right_bg) > self.onset_threshold)
+        if onset_index_left == 0: onset_index_left = len(left) - 1
+        if onset_index_right== 0: onset_index_right= len(right)- 1
+        onset_index = np.min([onset_index_left, onset_index_right])
         onset_distance = self.DISTANCE_REFERENCE[onset_index]
         onset = {'distance': onset_distance, 'index': onset_index}
         return onset
@@ -92,9 +95,9 @@ class Avoid(Cue):
         self.A = config.DECELERATION_FACTOR
         self.K = 0.1
         self.g = 9.8
-        self.centri_accel = 1*self.g
+        self.centri_accel = config.CENTRIFUGAL_ACCEL*self.g
 
-        self.plan='A'
+        self.plan='B'
 
     
     def get_kinematic(self, input_echoes):
@@ -121,8 +124,8 @@ class Avoid(Cue):
             omega = self._plan_A(v, iid)
         elif self.plan=='B':
             omega = self._plan_B(v, iid, cues['onset_distance'])
-        if np.abs(omega) > config.MAX_ANGULAR_VELOCITY:
-            omega = np.sign(omega)*config.MAX_ANGULAR_VELOCITY
+        if np.abs(omega) > self.max_angular_velocity:
+            omega = np.sign(omega)*self.max_angular_velocity
         return omega
 
 
