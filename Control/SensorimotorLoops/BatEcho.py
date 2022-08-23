@@ -97,7 +97,7 @@ class Avoid(Cue):
         self.g = 9.8
         self.centri_accel = config.CENTRIFUGAL_ACCEL*self.g
 
-        self.plan='B'
+        self.plan='A'
 
     
     def get_kinematic(self, input_echoes):
