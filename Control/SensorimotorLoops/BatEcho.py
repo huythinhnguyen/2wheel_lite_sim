@@ -87,7 +87,7 @@ class Avoid(Cue):
         super().__init__(background)
         self.bot_convert = config.ROBOT_CONVERSION
         self.max_linear_velocity = config.MAX_LINEAR_VELOCITY if not self.bot_convert else config.ROBOT_MAX_LINEAR_VELOCITY
-        self.max_angular_velocity= config.MAX_ANGULAR_VELOCITY if not gself.bot_convert else config.ROBOT_MAX_ANGULAR_VELOCITY
+        self.max_angular_velocity= config.MAX_ANGULAR_VELOCITY if not self.bot_convert else config.ROBOT_MAX_ANGULAR_VELOCITY
         self.linear_velo_offset = config.LINEAR_VELOCITY_OFFSET
         self.A = config.DECELERATION_FACTOR
         self.K = 0.1
