@@ -1,5 +1,6 @@
 ### 08/23/22:
 - Currently testing the algorithm for avoidance using continueous profiles.
+- Plan A actually works better. Take some more tests. Record data save!
 
 ### 08/19/22:
 - A few math methods implemented. For the avoidance loop:
