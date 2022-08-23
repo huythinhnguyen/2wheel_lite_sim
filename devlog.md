@@ -1,3 +1,6 @@
+### 08/23/22:
+- Currently testing the algorithm for avoidance using continueous profiles.
+
 ### 08/19/22:
 - A few math methods implemented. For the avoidance loop:
   >> The velocity profile is partially drived from the tau. using the same exponential equation without considering the acceleration term.
