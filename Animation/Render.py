@@ -90,12 +90,7 @@ class Sequences:
         if reset: self._reset()
         
 
-    def _fig_init(self):
-        for i, plotter in enumerate(self.plot_obj_funcs):
-            if self.objkeys[i] == 'plant':
-                self.ax = plotter(self.ax, self.objects[self.objkeys[i]])
-        self.ax.set_aspect('equal')
-        self.ax.set_xlabel(labels[0])
+    def _fig_init(self):tsize=16, sparseness=100, flipcourse=True):
         self.ax.set_ylabel(labels[1])
 
 
@@ -115,7 +110,6 @@ class Sequences:
         plt.rcParams.update({'font.size': self.fontsize})
         self.objects = {}
 
-        
 
 def _render_agent(ax, poses, plotcourse=True, plotarrow=True, **kwarg):
     agent = ObjUtils.Agent()
