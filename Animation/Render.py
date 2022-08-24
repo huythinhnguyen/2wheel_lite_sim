@@ -90,7 +90,12 @@ class Sequences:
         if reset: self._reset()
         
 
-    def _fig_init(self):tsize=16, sparseness=100, flipcourse=True):
+    def _fig_init(self, labels=['x (m)','y (m)']):
+        for i, plotter in enumerate(self.plot_obj_funcs):
+            if self.objkeys[i] == 'plant':
+                self.ax = plotter(self.ax, self.objects[self.objkeys[i]])
+        self.ax.set_aspect('equal')
+        self.ax.set_xlabel(labels[0])
         self.ax.set_ylabel(labels[1])
 
 
