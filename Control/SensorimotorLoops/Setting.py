@@ -4,11 +4,12 @@ from math import pi
 ### VELOCITY LIMIT  ###############################################
 ###################################################################
 MAX_LINEAR_VELOCITY = 5 # robot max velo is 0.5 m/s
-MAX_ANGULAR_VELOCITY = 10*pi
+MAX_ANGULAR_VELOCITY = 20*pi
+MAX_ANGULAR_ACCELERATION = 0.5*MAX_ANGULAR_VELOCITY
 LINEAR_VELOCITY_OFFSET = 0.
 DECELERATION_FACTOR = 1 # Choose between 1 to 5 the higher the steeper the deceleration
 CENTRIFUGAL_ACCEL = 3
-CHIRP_RATE = 50 # Hz
+CHIRP_RATE = 40 # Hz
 
 ###################################################################
 ###  ROBOT CONVERSION   ###########################################
