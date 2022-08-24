@@ -91,13 +91,17 @@ class Avoid(Cue):
         self.bot_convert = config.ROBOT_CONVERSION
         self.max_linear_velocity = config.MAX_LINEAR_VELOCITY if not self.bot_convert else config.ROBOT_MAX_LINEAR_VELOCITY
         self.max_angular_velocity= config.MAX_ANGULAR_VELOCITY if not self.bot_convert else config.ROBOT_MAX_ANGULAR_VELOCITY
-        self.linear_velo_offset = config.LINEAR_VELOCITY_OFFSET
+        self.max_angular_acceleration = config.MAX_ANGULAR_ACCELERATION if not self.bot_convert else config.ROBOT_MAX_ANGULAR_ACCELERATION
+        self.linear_velo_offset = config.LINEAR_VELOCITY_OFFSET if not self.bot_convert else config.ROBOT_LINEAR_VELOCITY_OFFSET
+        self.dt = 1/config.CHIRP_RATE if not self.bot_convert else 1/config.ROBOT_CHIRP_RATE
         self.A = config.DECELERATION_FACTOR
         self.K = 0.1
         self.g = 9.8
         self.centri_accel = config.CENTRIFUGAL_ACCEL*self.g
-
+        self.cache={}
+        self.cache['previous_omega'] = 0
         self.plan='A'
+        self.body_radius = 0.15
 
     
     def get_kinematic(self, input_echoes):
@@ -110,7 +114,7 @@ class Avoid(Cue):
     def _get_linear_velocity(self,cues):
         distance = cues['onset_distance']
         v = (self.max_linear_velocity - self.linear_velo_offset)*\
-            (1 - np.power((1-self.K*self.A*distance),1/self.K-1)) \
+            (1 - np.power((1-self.K*self.A*(distance-self.body_radius)),1/self.K-1)) \
             + self.linear_velo_offset
         if v>self.max_linear_velocity: v=self.max_linear_velocity
         return v
@@ -126,7 +130,16 @@ class Avoid(Cue):
             omega = self._plan_B(v, iid, cues['onset_distance'])
         if np.abs(omega) > self.max_angular_velocity:
             omega = np.sign(omega)*self.max_angular_velocity
-        return omega
+        return self._angular_accel_cap(omega)
+
+
+    def _angular_accel_cap(self, omega, update_previous=True):
+        omega_dot = (omega - self.cache['previous_omega'])/self.dt
+        if np.abs(omega_dot) > self.max_angular_acceleration:
+            corrected_omega = self.cache['previous_omega'] + self.max_angular_acceleration*self.dt*np.sign(omega_dot)
+        else: corrected_omega = omega
+        if update_previous: self.cache['previous_omega'] = corrected_omega
+        return corrected_omega
 
 
     def _plan_A(self, v, iid):
