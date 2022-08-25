@@ -1,3 +1,13 @@
+### 08/25/22:
+- Run some sanity test. Figured out how to solve the lacking data problem post-45 degree mark.
+- Figured out that we can fitted the gain curve for each ears with a polar rose curve.
+  - mode 3 for each curve.
+  Fitted curve = (1-a) + a*cos(3*angle - theta*2))
+  theta: angle of ear from center
+  angle: source angle
+  a: 0.7 --> 0 is a circle
+  --> need to figure out good way to fit the curve and then add that to Spatializer.
+
 ### 08/23/22:
 - Currently testing the algorithm for avoidance using continueous profiles.
 - Plan A actually works better. Take some more tests. Record data save!
