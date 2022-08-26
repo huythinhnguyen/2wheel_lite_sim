@@ -40,8 +40,8 @@ class Retriever:
     def _get_reference(self,objects):
         if not self.random:
             np.random.seed(1)
-            if self.non_random_index is not none: selection = self.non_random_index
-            else: raise valueerror('must input index when random=false')
+            if self.non_random_index is not None: selection = self.non_random_index
+            else: raise ValueError('must input index when random=false')
         distances = [objects[0]] if type(objects)==list else list(objects[:,0])
         angles = [objects[1]] if type(objects)==list else list(objects[:,1])
         klasses = [objects[2]] if type(objects)==list else list(objects[:,2])
