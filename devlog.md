@@ -1,3 +1,6 @@
+### 08/27/22:
+- Derived some fitting equations. Noted here.
+
 ### 08/25/22:
 - Run some sanity test. Figured out how to solve the lacking data problem post-45 degree mark.
 - Figured out that we can fitted the gain curve for each ears with a polar rose curve.
