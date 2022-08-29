@@ -9,11 +9,12 @@ class FoV:
         self.objects_dict={'pole':1, 'plant':2}
         if pose is None: pose = np.zeros(3)
         self.cache = []
+        self.obscuring = Setting.FOV_OBSCURING
 
 
     def view(self, objects, pose=None, input_format='cartesian', output_format='cartesian'):
         objects = self._in_view_filter(objects, pose=pose, input_format=input_format, output_format='polar')
-        objects = self._obscure(objects)
+        if self.obscuring: objects = self._obscure(objects)
         if output_format=='cartesian':
             return self._pol2cart(objects)
         else:
