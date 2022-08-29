@@ -34,7 +34,7 @@ class Retriever:
         self.air_absorption = Setting.AIR_ABSORPTION
         self.DISTANCE_ENCODING = Setting.DISTANCE_ENCODING
         
-        self.angle_limit = 45
+        self.angle_limit = Setting.COLLECTION_ANGLE_LIMIT
         self.left_ear_gain = GainCurve.EarGain(mode='left')
         self.right_ear_gain= GainCurve.EarGain(mode='right')
 
