@@ -58,13 +58,14 @@ class Retriever:
                 if self.random: selection = np.random.randint(len(left_set))
                 left_echoes[i], right_echoes[i] = left_set[selection,:], right_set[selection,:]
             else:
-                ref_path = self._get_data_path(distance, np.sign(angle)*self.angle_limit, klass)
+                ref_angle = self.angle_limit - np.random.randint(3) if self.random else self.angle_limit
+                ref_path = self._get_data_path(distance, np.sign(angle)*ref_angle, klass)
                 left_set = np.load(os.path.join(ref_path, 'left.npy'))
                 right_set = np.load(os.path.join(ref_path, 'right.npy'))
                 if self.random: selection = np.random.randint(len(left_set))
                 left_ref, right_ref =left_set[selection,:], right_set[selection,:]
-                left_gain = self.L_ear_gain.get_gain_ratio(angle, self.angle_limit*np.sign(angle), radians=False)
-                right_gain= self.R_ear_gain.get_gain_ratio(angle, self.angle_limit*np.sign(angle), radians=False) 
+                left_gain = self.L_ear_gain.get_gain_ratio(angle, np.sign(angle)*ref_angle, radians=False)
+                right_gain= self.R_ear_gain.get_gain_ratio(angle, np.sign(angle)*ref_angle, radians=False) 
                 left_echoes[i] = left_gain * left_ref
                 right_echoes[i] = right_gain * right_ref
         return left_echoes, right_echoes
