@@ -3,7 +3,7 @@ Spatializer reference sounds into scence when given locations of sound sources
 """
 
 import numpy as np
-from . import Cochlear, Compressors, Setting, Viewer
+from . import Cochlear, Compressors, Setting, Viewer, GainCurve
 import sys
 import os
 
@@ -33,6 +33,10 @@ class Retriever:
         self.inward_spread_factor = Setting.INWARD_SPREAD
         self.air_absorption = Setting.AIR_ABSORPTION
         self.DISTANCE_ENCODING = Setting.DISTANCE_ENCODING
+        
+        self.angle_limit = 45
+        self.left_ear_gain = GainCurve.EarGain(mode='left')
+        self.right_ear_gain= GainCurve.EarGain(mode='right')
 
         self.cache={}
 
@@ -47,11 +51,20 @@ class Retriever:
         klasses = [objects[2]] if type(objects)==list else list(objects[:,2])
         left_echoes, right_echoes = np.empty((len(distances),self.raw_length)), np.empty((len(distances),self.raw_length))
         for i, (distance, angle, klass) in enumerate(zip(distances, angles, klasses)):
-            path = self._get_data_path(distance, angle, klass)
-            left_set = np.load(os.path.join(path, 'left.npy'))
-            right_set = np.load(os.path.join(path, 'right.npy'))
-            if self.random: selection = np.random.randint(len(left_set))
-            left_echoes[i], right_echoes[i] = left_set[selection,:], right_set[selection,:]
+            if np.abs(angle) < self.angle_limit:
+                path = self._get_data_path(distance, angle, klass)
+                left_set = np.load(os.path.join(path, 'left.npy'))
+                right_set = np.load(os.path.join(path, 'right.npy'))
+                if self.random: selection = np.random.randint(len(left_set))
+                left_echoes[i], right_echoes[i] = left_set[selection,:], right_set[selection,:]
+            else:
+                ref_path = self._get_data_path(distance, np.sign(angle)*self.angle_limit, klass)
+                left_set = np.load(os.path.join(ref_path, 'left.npy'))
+                right_set = np.load(os.path.join(ref_path, 'right.npy'))
+                if self.random: selection = np.random.randint(len(left_set))
+                left_ref, right_ref =left_set[selection,:], right_set[selection,:]
+                left_echoes[i] = self.left_ear_gain.get_gain_ratio(angle, self.angle_limit, radians=False) * left_ref
+                right_echoes[i] = self.right_ear_gain.get_gain_ratio(angle, self.angle_limit, radians=False) * right_ref
         return left_echoes, right_echoes
 
 
@@ -61,7 +74,6 @@ class Retriever:
         k = list(self.objects_dict.keys())[list(self.objects_dict.values()).index(int(klass))]
         path = os.path.join(self.DATAROOT,k,d+'_'+a)
         return path
-        
         
 
     def _get_angle_interpolated_reference(self,objects): # LINEAR
