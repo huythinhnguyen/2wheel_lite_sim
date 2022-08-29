@@ -7,7 +7,7 @@ class EarGain:
     def __init__(self, mode=None, **kwargs):
         self.mode = mode.capitalize() if mode is not None else 'Null'
         self.ear_angle = Setting.LEFT_EAR_FIT_ANGLE if self.mode[0]=='L' else Setting.RIGHT_EAR_FIT_ANGLE if self.mode[0]=='R' else kwargs['ear_angle']
-        self.rose_k = Setting.NUMBER_OF_PEDALS if 'rose_k' not in kwargs.key() else kwargs['rose_k']
+        self.rose_k = Setting.NUMBER_OF_PEDALS if 'rose_k' not in kwargs.keys() else kwargs['rose_k']
         self.rose_b = Setting.ROSE_CURVE_B if 'rose_b' not in kwargs.keys() else kwargs['rose_b']
         self.rose_a = 1 - self.rose_b
         
