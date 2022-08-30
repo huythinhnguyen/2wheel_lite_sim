@@ -14,13 +14,25 @@ class EarGain:
 
     def get_gain_ratio(self, target_angle, ref_angle, radians=True):
         gain_diff = self._normalized_gain(target_angle,radians=radians)-self._normalized_gain(ref_angle,radians=radians)
-        return np.power(10, gain_diff/20)
+        if gain_diff != 0:
+            return np.power(10, gain_diff/20)
+        else:
+            if (self.mode[0]=='L' and target_angle<0) or (self.mode[0]=='R' and target_angle>0):
+                gain_diff = self._tail_gain(target_angle,radians=radians)-self._tail_gain(ref_angle,radians=radians)
+                return np.power(10,gain_diff/20)
+            else:
+                return np.power(10, gain_diff/20)
 
 
     def _normalized_gain(self, angle, radians=True):
         theta = np.copy(angle) if radians else np.radians(angle)
-        temp=self.rose_a  + self.rose_b*np.cos(self.rose_k*theta - self.ear_angle)
-        if temp<np.power(10,self.min_gain/20): temp = np.power(10,self.min_gain/20)
-        gain = 20*np.log10(temp)
-        return gain
+        gain=self.rose_a  + self.rose_b*np.cos(self.rose_k*theta - self.ear_angle)
+        if gain<np.power(10,self.min_gain/20): gain = np.power(10,self.min_gain/20)
+        return 20*np.log10(gain)
 
+
+    def _tail_gain(self, angle, radians=True):
+        theta = np.copy(angle) if radians else np.radians(angle)
+        gain = 0.1*self.rose_b* np.cos(self.rose_k*theta + self.ear_angle)
+        if gain<np.power(10, self.min_gain/20): gain = np.power(10, self.min_gain/20)
+        return 20*np.log10(gain)
