@@ -1,9 +1,8 @@
-### 08/27/22:
-- Derived some fitting equations. Noted here.
-fitted_L = (1-a)+a*np.cos(3*extended_angles-np.pi*(5/18))
-fitted_R = (1-a)+a*np.cos(3*extended_angles+np.pi*(6.5/18))
-- R/L difference: -(0.6/40)*angles + 1
+### 08/30/22
+- Testing the locomotion today!
 
+### 08/27/22:
+- Finalized the gain curve equation!!! Everything is in the Setting! The key is use log scale and dB unit!
 
 ### 08/25/22:
 - Run some sanity test. Figured out how to solve the lacking data problem post-45 degree mark.
