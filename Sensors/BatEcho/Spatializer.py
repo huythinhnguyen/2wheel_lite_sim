@@ -37,7 +37,7 @@ class Retriever:
         self.angle_limit = Setting.COLLECTION_ANGLE_LIMIT
         self.L_ear_gain = GainCurve.EarGain(mode='L')
         self.R_ear_gain= GainCurve.EarGain(mode='R')
-
+        self.gain_ref_random_level = 3
         self.cache={}
 
             
@@ -58,7 +58,7 @@ class Retriever:
                 if self.random: selection = np.random.randint(len(left_set))
                 left_echoes[i], right_echoes[i] = left_set[selection,:], right_set[selection,:]
             else:
-                ref_angle = self.angle_limit - np.random.randint(3) if self.random else self.angle_limit
+                ref_angle = self.angle_limit - np.random.randint(self.gain_ref_random_level) if self.random else self.angle_limit
                 ref_path = self._get_data_path(distance, np.sign(angle)*ref_angle, klass)
                 left_set = np.load(os.path.join(ref_path, 'left.npy'))
                 right_set = np.load(os.path.join(ref_path, 'right.npy'))
