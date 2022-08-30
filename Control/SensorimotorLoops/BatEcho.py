@@ -98,16 +98,17 @@ class Avoid(Cue):
         self.K = 0.1
         self.g = 9.8
         self.centri_accel = config.CENTRIFUGAL_ACCEL*self.g
-        self.cache={}
-        self.cache['previous_omega'] = 0
+        self.kine_cache = {'v': 0., 'omega': 0.}
         self.plan='A'
         self.body_radius = 0.15
+        self.B = 5
 
     
     def get_kinematic(self, input_echoes):
         cues = self.get_cues(input_echoes)
         v = self._get_linear_velocity(cues)
         omega = self._get_angular_velocity(cues, v=v)
+        self.kine_cache.update({'v': v, 'omega': omega})
         return v, omega
 
 
@@ -133,14 +134,12 @@ class Avoid(Cue):
         return self._angular_accel_cap(omega)
 
 
-    def _angular_accel_cap(self, omega, update_previous=True):
-        omega_dot = (omega - self.cache['previous_omega'])/self.dt
+    def _angular_accel_cap(self, omega):
+        omega_dot = (omega - self.kine_cache['omega'])/self.dt
         if np.abs(omega_dot) > self.max_angular_acceleration:
-            corrected_omega = self.cache['previous_omega'] + self.max_angular_acceleration*self.dt*np.sign(omega_dot)
-        else: corrected_omega = omega
-        if update_previous: self.cache['previous_omega'] = corrected_omega
-        return corrected_omega
-
+            return self.kine_cache['omega'] + self.max_angular_acceleration*self.dt*np.sign(omega_dot)
+        else: return omega
+        
 
     def _plan_A(self, v, iid):
         R_min = np.power(v,2) / self.centri_accel
@@ -150,7 +149,8 @@ class Avoid(Cue):
 
     def _plan_B(self, v, iid, onset_distance):
         R_min = np.power(v,2) / self.centri_accel
-        omega = -np.sign(iid) * (v/R_min) * np.exp(-1*onset_distance)
+        w = (v/R_min) * np.exp(-1*(onset_distance-self.body_radius))
+        omega = -np.sign(iid) * w if onset_distance > self.B*self.body_radius else np.sign(self.kine_cache['omega'])*w
         return omega
 
     
