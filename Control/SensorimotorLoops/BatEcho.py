@@ -125,8 +125,9 @@ class Avoid(Cue):
 
     def _linear_accel_cap(self,v):
         v_dot = (v - self.kine_cache['v'])/self.dt
-        if v_dot < self.linear_decel_limit:
-            return self.kine_cache['v'] + self.linear_decel_limit*self.dt
+        if v_dot< self.linear_decel_limit:
+            return self.kine_cache['v'] + (self.linear_decel_limit/self.max_linear_velocity)*self.kine_cache['v']*self.dt
+        #    #return self.kine_cache['v'] - self.linear_accel_limit*self.dt
         elif v_dot > self.linear_accel_limit:
             return self.kine_cache['v'] + self.linear_accel_limit*self.dt
         else:
@@ -171,11 +172,21 @@ class Approach(Cue):
     def __init__(self, background=None):
         super().__init__(background)
         self.bot_convert = config.ROBOT_CONVERSION
-        self.max_linear_velocity = config.MAX_LINEAR_VELOCITY if self.bot_convert else config.ROBOT_MAX_LINEAR_VELOCITY
-        self.max_angular_velocity= config.MAX_ANGULAR_VELOCITY if self.bot_convert else config.ROBOT_MAX_ANGULAR_VELOCITY
-        self.linear_velo_offset = config.LINEAR_VELOCITY_OFFSET
+        self.max_linear_velocity = config.MAX_LINEAR_VELOCITY if not self.bot_convert else config.ROBOT_MAX_LINEAR_VELOCITY
+        self.max_angular_velocity= config.MAX_ANGULAR_VELOCITY if not self.bot_convert else config.ROBOT_MAX_ANGULAR_VELOCITY
+        self.max_angular_acceleration = config.MAX_ANGULAR_ACCELERATION if not self.bot_convert else config.ROBOT_MAX_ANGULAR_ACCELERATION
+        self.linear_velo_offset = config.LINEAR_VELOCITY_OFFSET if not self.bot_convert else config.ROBOT_LINEAR_VELOCITY_OFFSET
+        self.dt = 1/config.CHIRP_RATE if not self.bot_convert else 1/config.ROBOT_CHIRP_RATE
         self.A = config.DECELERATION_FACTOR
-        self.K = 0.1
+        self.K = config.TAU_K
+        self.g = config.GRAVI_ACCEL
+        self.centri_accel = config.CENTRIFUGAL_ACCEL
+        self.kine_cache = {'v': 0., 'omega': 0.}
+        self.plan='B'
+        self.body_radius = config.BODY_RADIUS
+        self.B = config.BAIL_DISTANCE_MULTIPLIER
+        self.linear_accel_limit = config.LINEAR_ACCEL_LIMIT
+        self.linear_decel_limit = config.LINEAR_DECEL_LIMIT
     
     def get_kinematic(self, input_echoes):
         cues = self.get_cues(input_echoes)
