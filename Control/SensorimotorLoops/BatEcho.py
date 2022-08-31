@@ -99,7 +99,7 @@ class Avoid(Cue):
         self.g = config.GRAVI_ACCEL
         self.centri_accel = config.CENTRIFUGAL_ACCEL
         self.kine_cache = {'v': 0., 'omega': 0.}
-        self.plan='A'
+        self.plan='B'
         self.body_radius = config.BODY_RADIUS
         self.B = config.BAIL_DISTANCE_MULTIPLIER
         self.linear_accel_limit = config.LINEAR_ACCEL_LIMIT
