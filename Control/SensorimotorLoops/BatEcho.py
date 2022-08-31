@@ -95,13 +95,15 @@ class Avoid(Cue):
         self.linear_velo_offset = config.LINEAR_VELOCITY_OFFSET if not self.bot_convert else config.ROBOT_LINEAR_VELOCITY_OFFSET
         self.dt = 1/config.CHIRP_RATE if not self.bot_convert else 1/config.ROBOT_CHIRP_RATE
         self.A = config.DECELERATION_FACTOR
-        self.K = 0.1
-        self.g = 9.8
-        self.centri_accel = config.CENTRIFUGAL_ACCEL*self.g
+        self.K = config.TAU_K
+        self.g = config.GRAVI_ACCEL
+        self.centri_accel = config.CENTRIFUGAL_ACCEL
         self.kine_cache = {'v': 0., 'omega': 0.}
         self.plan='A'
-        self.body_radius = 0.15
-        self.B = 5
+        self.body_radius = config.BODY_RADIUS
+        self.B = config.BAIL_DISTANCE_MULTIPLIER
+        self.linear_accel_limit = config.LINEAR_ACCEL_LIMIT
+        self.linear_decel_limit = config.LINEAR_DECEL_LIMIT
 
     
     def get_kinematic(self, input_echoes):
@@ -118,7 +120,17 @@ class Avoid(Cue):
             (1 - np.power((1-self.K*self.A*(distance-self.body_radius)),1/self.K-1)) \
             + self.linear_velo_offset
         if v>self.max_linear_velocity: v=self.max_linear_velocity
-        return v
+        return self._linear_accel_cap(v)
+
+
+    def _linear_accel_cap(self,v):
+        v_dot = (v - self.kine_cache['v'])/self.dt
+        if v_dot < self.linear_decel_limit:
+            return self.kine_cache['v'] + self.linear_decel_limit*self.dt
+        elif v_dot > self.linear_accel_limit:
+            return self.kine_cache['v'] + self.linear_accel_limit*self.dt
+        else:
+            return v
     
 
     def _get_angular_velocity(self,cues, v=None):
