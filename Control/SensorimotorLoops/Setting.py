@@ -19,6 +19,7 @@ LINEAR_DECEL_LIMIT = -1.1 * MAX_LINEAR_VELOCITY
 LINEAR_ACCEL_LIMIT = 1 * GRAVI_ACCEL
 BODY_RADIUS = 0.15
 BAIL_DISTANCE_MULTIPLIER = 5
+APPROACH_STEER_DAMPING = 40 # less than 10 or 20 is very unstable.
 
 ###################################################################
 ###  ROBOT CONVERSION   ###########################################
