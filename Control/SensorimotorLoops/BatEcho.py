@@ -99,7 +99,6 @@ class Avoid(Cue):
         self.g = config.GRAVI_ACCEL
         self.centri_accel = config.CENTRIFUGAL_ACCEL
         self.kine_cache = {'v': 0., 'omega': 0.}
-        self.plan='B'
         self.body_radius = config.BODY_RADIUS
         self.B = config.BAIL_DISTANCE_MULTIPLIER
         self.linear_accel_limit = config.LINEAR_ACCEL_LIMIT
@@ -138,10 +137,7 @@ class Avoid(Cue):
         iid = cues['IID']
         if v is None:
             v = self._get_linear_velocity(cues)
-        if self.plan=='A':
-            omega = self._plan_A(v, iid)
-        elif self.plan=='B':
-            omega = self._plan_B(v, iid, cues['onset_distance'])
+        omega = self._plan_B(v, iid, cues['onset_distance'])
         if np.abs(omega) > self.max_angular_velocity:
             omega = np.sign(omega)*self.max_angular_velocity
         return self._angular_accel_cap(omega)
@@ -159,7 +155,7 @@ class Avoid(Cue):
         omega = -np.sign(iid) * (v/R_min)
         return omega
 
-
+    ### USE THIS PLAN! ###
     def _plan_B(self, v, iid, onset_distance):
         R_min = np.power(v,2) / self.centri_accel
         w = (v/R_min) * np.exp(-1*(onset_distance-self.body_radius))
@@ -182,29 +178,51 @@ class Approach(Cue):
         self.g = config.GRAVI_ACCEL
         self.centri_accel = config.CENTRIFUGAL_ACCEL
         self.kine_cache = {'v': 0., 'omega': 0.}
-        self.plan='B'
         self.body_radius = config.BODY_RADIUS
         self.B = config.BAIL_DISTANCE_MULTIPLIER
         self.linear_accel_limit = config.LINEAR_ACCEL_LIMIT
         self.linear_decel_limit = config.LINEAR_DECEL_LIMIT
     
+
     def get_kinematic(self, input_echoes):
         cues = self.get_cues(input_echoes)
         v = self._get_linear_velocity(cues)
-        omega = self._get_angular_velocity(cues)
+        omega = self._get_angular_velocity(cues, v=v)
+        self.kine_cache.update({'v': v, 'omega': omega})
         return v, omega
 
 
     def _get_linear_velocity(self,cues):
         distance = cues['onset_distance']
         v = (self.max_linear_velocity - self.linear_velo_offset)*\
-            (1 - np.power((1-self.K*self.A*distance),1/self.K-1)) \
+            (1 - np.power((1-self.K*self.A*(distance-self.body_radius)),1/self.K-1)) \
             + self.linear_velo_offset
         if v>self.max_linear_velocity: v=self.max_linear_velocity
-        return v
-    
+        return self._linear_accel_cap(v)
+
+
+    def _linear_accel_cap(self,v):
+        v_dot = (v - self.kine_cache['v'])/self.dt
+        if v_dot< self.linear_decel_limit:
+            return self.kine_cache['v'] + (self.linear_decel_limit/self.max_linear_velocity)*self.kine_cache['v']*self.dt
+        #    #return self.kine_cache['v'] - self.linear_accel_limit*self.dt
+        elif v_dot > self.linear_accel_limit:
+            return self.kine_cache['v'] + self.linear_accel_limit*self.dt
+        else:
+            return v
+
 
     def _get_angular_velocity(self,cues):
+        iid = cues['IID']
+        omega = self.max_angular_acceleration * iid / 10
+        if np.abs(omega) > self.max_angular_velocity:
+            omega = np.sign(omega)*self.max_angular_velocity
+        return self._angular_accel_cap(omega)
+    
 
-        return omega
+    def _angular_accel_cap(self, omega):
+        omega_dot = (omega - self.kine_cache['omega'])/self.dt
+        if np.abs(omega_dot) > self.max_angular_acceleration:
+            return self.kine_cache['omega'] + self.max_angular_acceleration*self.dt*np.sign(omega_dot)
+        else: return omega
     
