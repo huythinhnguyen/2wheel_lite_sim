@@ -179,15 +179,15 @@ class Approach(Cue):
         self.centri_accel = config.CENTRIFUGAL_ACCEL
         self.kine_cache = {'v': 0., 'omega': 0.}
         self.body_radius = config.BODY_RADIUS
-        self.B = config.BAIL_DISTANCE_MULTIPLIER
         self.linear_accel_limit = config.LINEAR_ACCEL_LIMIT
         self.linear_decel_limit = config.LINEAR_DECEL_LIMIT
+        self.steer_damper = config.APPROACH_STEER_DAMPING
     
 
     def get_kinematic(self, input_echoes):
         cues = self.get_cues(input_echoes)
         v = self._get_linear_velocity(cues)
-        omega = self._get_angular_velocity(cues, v=v)
+        omega = self._get_angular_velocity(cues)
         self.kine_cache.update({'v': v, 'omega': omega})
         return v, omega
 
@@ -212,9 +212,11 @@ class Approach(Cue):
             return v
 
 
-    def _get_angular_velocity(self,cues):
+    def _get_angular_velocity(self, cues,v=None):
         iid = cues['IID']
-        omega = self.max_angular_acceleration * iid / 10
+        if v is None:
+            v = self._get_linear_velocity(cues)
+        omega = self._plan_B(v, iid)
         if np.abs(omega) > self.max_angular_velocity:
             omega = np.sign(omega)*self.max_angular_velocity
         return self._angular_accel_cap(omega)
@@ -226,3 +228,17 @@ class Approach(Cue):
             return self.kine_cache['omega'] + self.max_angular_acceleration*self.dt*np.sign(omega_dot)
         else: return omega
     
+
+    def _plan_A(self, v, iid):
+        return self.max_angular_acceleration * iid / self.steer_damper
+
+    ### Use this Plan
+    def _plan_B(self, v, iid):
+        R_min = np.power(v,2) / self.centri_accel
+        temp = iid/self.steer_damper * np.pi
+        temp = np.pi/2 if temp>np.pi/2 else -np.pi/2 if temp<-np.pi/2 else temp
+        if temp==0:
+            return 0.
+        else:
+            R_select = 1/np.tan(temp)+np.sign(iid)*R_min
+            return v/R_select
