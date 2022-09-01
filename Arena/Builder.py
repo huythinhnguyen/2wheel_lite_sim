@@ -47,8 +47,8 @@ def build_circles(centers, radii, spacings, rotates=None, random_rotates=False):
     if rotates is None:
         rotates = 0.1*np.pi*np.randome.rand(len(centers)) if random_rotates else np.zeros(len(centers))
     circles = np.array([]).reshape(0,2)
-    for (center, radius, spacing, rotate) in zip(centers, radii, spacing, rotates):
-        circles = np.vstack((circles, build_circle(center, radius, spacing, rotate)))
+    for (center, radius, spacing, rotate) in zip(centers, radii, spacings, rotates):
+        circles = np.vstack((circles, build_circle(center, radius, spacings, rotate)))
     return circles
 
 
