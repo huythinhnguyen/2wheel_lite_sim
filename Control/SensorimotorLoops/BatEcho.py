@@ -264,7 +264,8 @@ class AvoidApproach(Avoid):
         iid = cues['IID']
         if v is None:
             v = self._get_linear_velocity(cues)
-        omega = self._plan_B(v, iid)
+        turning_radius = self._calc_turning_radius(iid, v, cues['onset_distance'])
+        omega = self._calc_angular_velocity(v, turning_radius)
         if np.abs(omega) > self.max_angular_velocity:
             omega = np.sign(omega)*self.max_angular_velocity
         return self._angular_accel_cap(omega)
