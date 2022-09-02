@@ -22,7 +22,7 @@ HIT_DISTANCE = 0.3
 
 if __name__=='__main__':
     objects = np.asarray([0,0,1]).reshape(-1,3)
-    pose_angles = np.arange(-4.5, 4.6, 1.5)*(np.pi/18)
+    pose_angles = np.arange(-3, 4, 1)*(np.pi/18)
     approach_factors = np.arange(0, 1.1, 0.1)
     episode=0
 
@@ -53,11 +53,11 @@ if __name__=='__main__':
                 onset_rec.append(controller.cache['onset_distance'])
                 iid_rec.append(controller.cache['IID'])
                 if np.sum(render.cache['inview'][:,0]<HIT_DISTANCE)>0:
-                    print('episode', episode, 'approach factor', A, 'angle', np.round(np.degrees(p_angle)), 'HIT')
+                    print('episode', episode, 'approach factor', np.round(A,1), 'angle', np.round(np.degrees(p_angle)), 'HIT')
                     pose_rec = np.vstack((pose_rec, bat.pose))
                     break
                 if np.linalg.norm(bat.pose[:2]) > 8:
-                    print('episode', episode, 'approach factor', A, 'angle', np.round(np.degrees(p_angle)), 'OUT')
+                    print('episode', episode, 'approach factor', np.round(A,1), 'angle', np.round(np.degrees(p_angle)), 'OUT')
                     pose_rec = np.vstack((pose_rec, bat.pose))
                     break
             poses.append(pose_rec)
