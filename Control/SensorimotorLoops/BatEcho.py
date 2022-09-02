@@ -271,7 +271,7 @@ class AvoidApproach(Avoid):
         return self._angular_accel_cap(omega)
     
 
-    def _calc_angular_velocity(v, R):
+    def _calc_angular_velocity(self, v, R):
         return v/R
 
     
