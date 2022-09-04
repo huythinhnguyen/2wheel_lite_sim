@@ -1,3 +1,7 @@
+### 09/03/22:
+- Tested Avoid and Approach Loops.
+- Implemented AvoidApproach Unified Loop. Tested but need to analyze the data. Need to adjust the equations as needed.
+
 ### 08/30/22
 - Testing the locomotion today!
 
