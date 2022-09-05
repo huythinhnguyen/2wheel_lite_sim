@@ -23,11 +23,12 @@ HIT_DISTANCE = 0.3
 if __name__=='__main__':
     objects = np.asarray([0,0,1]).reshape(-1,3)
     pose_angles = np.arange(-2, 2.1, 0.5)*(np.pi/18)
-    approach_factors = np.arange(0, 1.1, 0.1)
+    approach_factors = np.arange(0, 1.02, 0.02)
     episode=0
 
     episodes, A_factors, poses, vs, omegas=[],[],[],[],[]
     onsets, iids = [],[]
+    approach_terms, avoid_terms = [], []
     angles = []
 
     for p_angle in pose_angles:
@@ -43,6 +44,8 @@ if __name__=='__main__':
             controller = AvoidApproach(approach_factor = A)
             pose_rec = np.array([]).reshape(0,3)
             v_rec, w_rec, onset_rec, iid_rec = [], [], [], []
+            approach_rec, avoid_rec = [],[]
+
 
             for _ in range(500):
                 pose_rec = np.vstack((pose_rec, bat.pose))
@@ -54,6 +57,8 @@ if __name__=='__main__':
                 w_rec.append(omega)
                 onset_rec.append(controller.cache['onset_distance'])
                 iid_rec.append(controller.cache['IID'])
+                approach_rec.append(controller.cache['approach_term'])
+                avoid_rec.append(controller.cache['avoid_term'])
                 if np.sum(render.cache['inview'][:,0]<HIT_DISTANCE)>0:
                     print('episode', episode, 'approach factor', np.round(A,1), 'angle', np.round(np.degrees(p_angle)), 'HIT')
                     pose_rec = np.vstack((pose_rec, bat.pose))
@@ -67,8 +72,9 @@ if __name__=='__main__':
             omegas.append(np.asarray(w_rec))
             onsets.append(np.asarray(onset_rec))
             iids.append(np.asarray(iid_rec))
-
-    data = {'episodes': episodes, 'A_factors': A_factors, 'poses': poses, 'v': vs, 'omega': omegas, 'onsets': onsets, 'iid': iids, }
+            approach_terms.append(np.asarray(approach_rec))
+            avoid_terms.append(np.asarray(avoid_rec))
+    data = {'episodes': episodes, 'angles': angles, 'A_factors': A_factors, 'poses': poses, 'v': vs, 'omega': omegas, 'onsets': onsets, 'iid': iids, 'avoid_term': avoid_terms, 'approach_term': approach_termsßß}
     df = pd.DataFrame(data)
     df.to_pickle('AvoidApproach_TestData_'+DATE+'.pkl')
 
