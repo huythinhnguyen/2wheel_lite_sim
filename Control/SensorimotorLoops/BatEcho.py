@@ -279,8 +279,15 @@ class AvoidApproach(Avoid):
         R_min = np.power(v,2) / self.centri_accel
         A = self.approach_factor
         scaled_IID = iid / self.steer_damper * np.pi
+        scaled_IID = np.pi/2 if scaled_IID>np.pi/2 else -np.pi/2 if scaled_IID<-np.pi/2 else scaled_IID
         approach_term = 1/np.tan(scaled_IID) + np.sign(iid)*R_min if scaled_IID!= 0 else float('inf')
         avoid_term = -np.sign(iid) * R_min * np.exp(onset_distance - self.body_radius)
+        if onset_distance < self.B*self.body_radius:
+            avoid_term = np.sign(self.kine_cache['omega'])*np.abs(avoid_term)
+
+        self.cache['approach_term'] = approach_term
+        self.cache['avoid_term'] = avoid_term
+        
         return A*approach_term + (1-A)*avoid_term
 
 """
