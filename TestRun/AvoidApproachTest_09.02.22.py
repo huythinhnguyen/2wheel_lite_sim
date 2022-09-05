@@ -16,18 +16,19 @@ from Control.SensorimotorLoops import Setting as controlconfig
 
 import pandas as pd
 
-DATE = '09.02.22'
+DATE = '09.04.22'
 HIT_DISTANCE = 0.3
 
 
 if __name__=='__main__':
     objects = np.asarray([0,0,1]).reshape(-1,3)
-    pose_angles = np.arange(-3, 4, 1)*(np.pi/18)
+    pose_angles = np.arange(-2, 2.1, 0.5)*(np.pi/18)
     approach_factors = np.arange(0, 1.1, 0.1)
     episode=0
 
     episodes, A_factors, poses, vs, omegas=[],[],[],[],[]
     onsets, iids = [],[]
+    angles = []
 
     for p_angle in pose_angles:
         pose = np.asarray([-5, 0, p_angle])
@@ -36,6 +37,7 @@ if __name__=='__main__':
             episodes.append(episode)
             episode += 1
             A_factors.append(A)
+            angles.append(np.degrees(p_angle))
             bat = State(pose=pose, dt=1/controlconfig.CHIRP_RATE)
             render = Render()
             controller = AvoidApproach(approach_factor = A)
@@ -66,7 +68,7 @@ if __name__=='__main__':
             onsets.append(np.asarray(onset_rec))
             iids.append(np.asarray(iid_rec))
 
-    data = {'episodes': episodes, 'A_factors': A_factors, 'poses': poses, 'v': vs, 'omega': omegas, 'onsets': onsets, 'iid': iids}
+    data = {'episodes': episodes, 'A_factors': A_factors, 'poses': poses, 'v': vs, 'omega': omegas, 'onsets': onsets, 'iid': iids, }
     df = pd.DataFrame(data)
     df.to_pickle('AvoidApproach_TestData_'+DATE+'.pkl')
 
