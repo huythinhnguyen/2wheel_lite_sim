@@ -22,7 +22,7 @@ HIT_DISTANCE = 0.3
 
 if __name__=='__main__':
     objects = np.asarray([0,0,1]).reshape(-1,3)
-    pose_angles = np.arange(-2, 2.1, 0.5)*(np.pi/18)
+    pose_angles = np.arange(-3, 3.1, 0.5)*(np.pi/18)
     approach_factors = np.arange(0, 1.02, 0.02)
     episode=0
 
@@ -60,11 +60,11 @@ if __name__=='__main__':
                 approach_rec.append(controller.cache['approach_term'])
                 avoid_rec.append(controller.cache['avoid_term'])
                 if np.sum(render.cache['inview'][:,0]<HIT_DISTANCE)>0:
-                    print('episode', episode, 'approach factor', np.round(A,1), 'angle', np.round(np.degrees(p_angle)), 'HIT')
+                    print('episode', episode, 'approach factor', np.round(A,2), 'angle', np.round(np.degrees(p_angle)), 'HIT')
                     pose_rec = np.vstack((pose_rec, bat.pose))
                     break
                 if np.linalg.norm(bat.pose[:2]) > 8:
-                    print('episode', episode, 'approach factor', np.round(A,1), 'angle', np.round(np.degrees(p_angle)), 'OUT')
+                    print('episode', episode, 'approach factor', np.round(A,2), 'angle', np.round(np.degrees(p_angle)), 'OUT')
                     pose_rec = np.vstack((pose_rec, bat.pose))
                     break
             poses.append(pose_rec)
@@ -74,7 +74,7 @@ if __name__=='__main__':
             iids.append(np.asarray(iid_rec))
             approach_terms.append(np.asarray(approach_rec))
             avoid_terms.append(np.asarray(avoid_rec))
-    data = {'episodes': episodes, 'angles': angles, 'A_factors': A_factors, 'poses': poses, 'v': vs, 'omega': omegas, 'onsets': onsets, 'iid': iids, 'avoid_term': avoid_terms, 'approach_term': approach_termsßß}
+    data = {'episodes': episodes, 'angles': angles, 'A_factors': A_factors, 'poses': poses, 'v': vs, 'omega': omegas, 'onsets': onsets, 'iid': iids, 'avoid_term': avoid_terms, 'approach_term': approach_terms}
     df = pd.DataFrame(data)
     df.to_pickle('AvoidApproach_TestData_'+DATE+'.pkl')
 
