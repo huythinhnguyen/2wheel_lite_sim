@@ -1,3 +1,7 @@
+### 09/04/22:
+- Quick observation of the Unified Loop: The factor is bias toward the avoid side.
+- The approach factor needs to be turned on all the way (>0.8, 0.9) to trigger a hit!
+
 ### 09/03/22:
 - Tested Avoid and Approach Loops.
 - Implemented AvoidApproach Unified Loop. Tested but need to analyze the data. Need to adjust the equations as needed.
