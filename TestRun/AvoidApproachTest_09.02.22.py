@@ -16,14 +16,14 @@ from Control.SensorimotorLoops import Setting as controlconfig
 
 import pandas as pd
 
-DATE = '09.04.22'
+DATE = '09.04.22b'
 HIT_DISTANCE = 0.3
 
 
 if __name__=='__main__':
-    objects = np.asarray([0,0,1]).reshape(-1,3)
-    pose_angles = np.arange(-3, 3.1, 0.5)*(np.pi/18)
-    approach_factors = np.arange(0, 1.02, 0.02)
+    objects = np.asarray([2.,0.,1]).reshape(-1,3)
+    pose_angles = np.arange(0, 3.1, 1.)*(np.pi/18)
+    approach_factors = np.arange(0, 1.1, 0.25)
     episode=0
 
     episodes, A_factors, poses, vs, omegas=[],[],[],[],[]
@@ -32,8 +32,7 @@ if __name__=='__main__':
     angles = []
 
     for p_angle in pose_angles:
-        pose = np.asarray([-5, 0, p_angle])
-
+        pose = np.asarray([0., 0., p_angle])
         for A in approach_factors:
             episodes.append(episode)
             episode += 1
@@ -42,10 +41,10 @@ if __name__=='__main__':
             bat = State(pose=pose, dt=1/controlconfig.CHIRP_RATE)
             render = Render()
             controller = AvoidApproach(approach_factor = A)
+            controller.kine_cache['v'] = controlconfig.MAX_LINEAR_VELOCITY
             pose_rec = np.array([]).reshape(0,3)
             v_rec, w_rec, onset_rec, iid_rec = [], [], [], []
             approach_rec, avoid_rec = [],[]
-
 
             for _ in range(500):
                 pose_rec = np.vstack((pose_rec, bat.pose))
@@ -63,7 +62,7 @@ if __name__=='__main__':
                     print('episode', episode, 'approach factor', np.round(A,2), 'angle', np.round(np.degrees(p_angle)), 'HIT')
                     pose_rec = np.vstack((pose_rec, bat.pose))
                     break
-                if np.linalg.norm(bat.pose[:2]) > 8:
+                if np.linalg.norm(bat.pose[:2]) > 5:
                     print('episode', episode, 'approach factor', np.round(A,2), 'angle', np.round(np.degrees(p_angle)), 'OUT')
                     pose_rec = np.vstack((pose_rec, bat.pose))
                     break
