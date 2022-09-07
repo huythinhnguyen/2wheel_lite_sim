@@ -278,10 +278,12 @@ class AvoidApproach(Avoid):
     def _calc_turning_radius(self, iid, v, onset_distance):
         R_min = np.power(v,2) / self.centri_accel
         A = self.approach_factor
-        scaled_IID = iid / self.steer_damper * np.pi
-        scaled_IID = np.pi/2 if scaled_IID>np.pi/2 else -np.pi/2 if scaled_IID<-np.pi/2 else scaled_IID
-        approach_term = 1/np.tan(scaled_IID) + np.sign(iid)*R_min if scaled_IID!= 0 else float('inf')
-        avoid_term = -np.sign(iid) * R_min * np.exp(onset_distance - self.body_radius)
+        scaled_IID = iid / self.steer_damper
+        scaled_IID = np.sign(iid) if np.abs(scaled_IID)>1 else scaled_IID
+        approach_term = -np.sign(iid)*(np.log(np.abs(scaled_IID))-R_min) if scaled_IID!= 0 else float('inf')
+        scaled_onset = (onset_distance)/np.max(Setting.COMPRESSED_DISTANCE_ENCODING)
+        scaled_onset = 1 if scaled_onset>1 else scaled_onset
+        avoid_term = -np.sign(iid)*(R_min - np.log(1-scaled_onset)) if scaled_onset<1 else float('inf')
         if onset_distance < self.B*self.body_radius:
             avoid_term = np.sign(self.kine_cache['omega'])*np.abs(avoid_term)
 
