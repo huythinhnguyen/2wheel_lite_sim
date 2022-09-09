@@ -292,6 +292,46 @@ class AvoidApproach(Avoid):
         
         return A*approach_term + (1-A)*avoid_term
 
+
+class AvoidApproachHunt(Avoid):
+    def __init__(self, background=None, **kwargs):
+        super().__init__(background)
+        self.steer_damper = config.APPROACH_STEER_DAMPING
+        self.approach_factor = 0 if 'approach_factor' not in kwargs.keys() else kwargs['approach_factor']
+
+
+    def get_kinematic(self, input_echoes, approach_factor=None):
+        if approach_factor is not None: self.approach_factor = approach_factor
+        cues = self.get_cues(input_echoes)
+        R = self._calc_turning_radius(cues['IID'], cues['onset_distance'])
+        v = np.sqrt(np.abs(R)*self.centri_accel) if R<0.1*sys.float_info.max else self.max_linear_velocity
+        if v > self.max_linear_velocity: v = self.max_linear_velocity
+        else: v = self._linear_accel_cap(v)
+        omega = v/R
+        if np.abs(omega)>self.max_angular_velocity: omega = np.sign(omega) * self.max_angular_velocity
+        else: omega = self._angular_accel_cap(omega)
+        self.kine_cache.update({'v': v, 'omega': omega})
+        return v, omega
+
+    
+    def _calc_turning_radius(self, iid, onset_distance):
+        R_min = 0.1
+        A = self.approach_factor
+        scaled_IID = iid / self.steer_damper
+        scaled_IID = np.sign(iid) if np.abs(scaled_IID)>1 else scaled_IID
+        approach_term = -np.sign(iid)*(np.log(np.abs(scaled_IID))-R_min) if scaled_IID!= 0 else sys.float_info.max
+        scaled_onset = (onset_distance)/np.max(Setting.COMPRESSED_DISTANCE_ENCODING)
+        scaled_onset = 1 if scaled_onset>1 else scaled_onset
+        avoid_term = -np.sign(iid)*(R_min - np.log(1-scaled_onset)) if scaled_onset<1 else sys.float_info.max
+        if onset_distance < self.B*self.body_radius:
+            avoid_term = np.sign(self.kine_cache['omega'])*np.abs(avoid_term)
+
+        self.cache['approach_term'] = approach_term
+        self.cache['avoid_term'] = avoid_term
+        
+        return A*approach_term + (1-A)*avoid_term
+
+
 """
     def _approach_A(self, v, iid):
         return self.max_angular_acceleration * iid / self.steer_damper
