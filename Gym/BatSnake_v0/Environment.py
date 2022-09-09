@@ -13,7 +13,7 @@ if pathlib.Path(os.path.abspath(__file__)).parents[2] not in sys.path:
     sys.path.append(pathlib.Path(os.path.abspath(__file__)).parents[2])
 
 from Sensors.BatEcho import Spatializer
-from Control.SensorimotorLoops import AvoidApproach
+from Control.SensorimotorLoops.BatEcho import AvoidApproach
 from Sensors.BatEcho import Setting as sensorconfig
 from Control.SensorimotorLoops import Setting as controlconfig
 from Simulation.Motion import State
@@ -21,15 +21,19 @@ from Simulation.Motion import State
 class DiscreteAction(py_environment.PyEnvironment):
     def __init__(self, init_pose, time_limit):
         self.locomotion = State(pose = init_pose, dt=1/controlconfig.CHIRP_RATE)
-        self.sensor = Spatializer()
+        self.sensor = Spatializer.Render()
         self.controller = AvoidApproach()
+
+        self.objects = None
 
         self._action_spec=array_spec.BoundedArraySpec(shape=(), dtype=np.int32, minimum=0, maximum=1, name='action')
         self._observation_spec=array_spec.BoundedArraySpec(shape=(100,), dtype=np.float64, minimum=0, name='observation')
-        self._state = np.zeros(100) # ECHO INPUT
+        self.echoes = self.sensor.run(pose=self.locomotion.pose, objects=self.objects)
+        self._state = np.asarray(list(self.echoes.values())).reshape(-1,)
         self._episode_ended = False
         self.time_limit = time_limit
         self.cache = {'init_pose': init_pose}
+        
 
     def action_spec(self):
         return self._action_spec
@@ -42,8 +46,23 @@ class DiscreteAction(py_environment.PyEnvironment):
         reward = 0
         if self._episode_ended:
             return self._reset()
+        # Open your eyes, see where you are
+        if help.collision_check(self.sensor.cache['inview'], sensorconfig.OBJECTS_DICT['plant']):
+            reward += help.reward_function(hit='plant')
+            self._episode_ended = True
+        elif help.collision_check(self.sensor.cache['inview'], sensorconfig.OBJECTS_DICT['pole']):
+            reward += help.reward_function(hit='pole')
+        # Move according to action
+        v, omega = self.controller.get_kinematic(self.echoes, approach_factor=action)
+        self.locomotion.update_kinematic(kinematic=[v, omega])
+        self.locomotion.update_pose()
+        self.echoes = self.sensor.run(pose=self.locomotion.pose, objects=self.objects)
+        self._state = np.asarray(list(self.echoes.values())).reshape(-1,)
         
-        # Do things here!
+        if self._episode_ended:
+            return ts.termination(self._state, reward=reward)
+        else:
+            return ts.transition(self._state, reward=reward, discount=1.0)
 
     
     def _reset(self, **kwargs):
@@ -53,6 +72,6 @@ class DiscreteAction(py_environment.PyEnvironment):
         self.sensor = Spatializer()
         self.controller = AvoidApproach()
 
-        return ts.restart(np.array([self._state], dtype=np.float64).reshape(len(self._state),))
+        return ts.restart(self._state)
 
     
