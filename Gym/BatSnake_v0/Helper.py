@@ -9,3 +9,11 @@ def collision_check(inview, object_class):
         return True
     else:
         return False
+
+
+def reward_function(**kwargs):
+    if 'hit' in kwargs.keys():
+        hit = kwargs['hit']
+        if hit == 'plant': return -1
+        if hit == 'pole': return +1
+    else: return 0
