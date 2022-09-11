@@ -62,30 +62,20 @@ def maze_builder(mode, maze_size=MAZE_SIZE, tunnel_width=TUNNEL_WIDTH):
 
 def spawn_food(mode, level, difficulty=0, maze_size=MAZE_SIZE, tunnel_width=TUNNEL_WIDTH):
     if mode=='box':
-        xlim_ls_normal=[((maze_size/2-tunnel_width) + OBJECT_SPACING['plant'], maze_size/2 - OBJECT_SPACING['plant']),
-                        (-(maze_size/2 - tunnel_width), 0),
-                        (-(maze_size/2 - OBJECT_SPACING['plant']),-(maze_size/2 - tunnel_width + OBJECT_SPACING['plant'])),
-                        (0, (maze_size/2 - tunnel_width))]
+        xlim_ls_normal=[((maze_size/2-tunnel_width) + OBJECT_SPACING['plant'], maze_size/2 - OBJECT_SPACING['plant']),(-(maze_size/2 - tunnel_width), 0),
+                        (-(maze_size/2 - OBJECT_SPACING['plant']),-(maze_size/2 - tunnel_width + OBJECT_SPACING['plant'])),(0, (maze_size/2 - tunnel_width))]
         xlim_ls_hard = xlim_ls_normal.copy()
         xlim_ls_hard[1], xlim_ls_hard[3] = (-(maze_size/2 - OBJECT_SPACING['plant']), 0), (0, maze_size/2 - OBJECT_SPACING['plant'])
+        #
+        ylim_ls_normal=[(0, (maze_size/2 - tunnel_width)),((maze_size/2-tunnel_width) + OBJECT_SPACING['plant'], maze_size/2 - OBJECT_SPACING['plant']),
+                        (0, -(maze_size/2 - tunnel_width)),(-(maze_size/2 - OBJECT_SPACING['plant']), -(maze_size/2-tunnel_width+OBJECT_SPACING['plant']))]
+        ylim_ls_hard = ylim_ls_normal.copy()
+        ylim_ls_hard[0], ylim_ls_hard[2] = (0, maze_size/2 - OBJECT_SPACING['plant']), (0, -(maze_size/2 - OBJECT_SPACING['plant']))
+        #
+        xlim = xlim_ls_normal[int(level%4)] if difficulty==0 else xlim_ls_hard[int(level%4)]
+        ylim = ylim_ls_normal[int(level%4)] if difficulty==0 else ylim_ls_hard[int(level%4)]
         
-        if level%4==0:
-            xlim = [(maze_size/2-tunnel_width) + OBJECT_SPACING['plant'], maze_size/2 - OBJECT_SPACING['plant']]
-            if difficulty==0: ylim = [0, (maze_size/2 - tunnel_width)]
-            elif difficulty>0: ylim = [0, maze_size/2 - OBJECT_SPACING['plant']]
-        elif level%4==1:
-            ylim = [(maze_size/2-tunnel_width) + OBJECT_SPACING['plant'], maze_size/2 - OBJECT_SPACING['plant']]
-            if difficulty==0: xlim = [-(maze_size/2 - tunnel_width), 0]
-            elif difficulty>0: xlim = [-(maze_size/2 - OBJECT_SPACING['plant']), 0]
-        elif level%4==2:
-            xlim = [-(maze_size/2 - OBJECT_SPACING['plant']),-(maze_size/2 - tunnel_width + OBJECT_SPACING['plant'])]
-            if difficulty==0: ylim = [0, -(maze_size/2 - tunnel_width)]
-            elif difficulty>0: ylim = [0, -(maze_size/2 - OBJECT_SPACING['plant'])]
-        elif level%4==3:
-            ylim = [-(maze_size/2 - OBJECT_SPACING['plant']), -(maze_size/2-tunnel_width+OBJECT_SPACING['plant'])]
-            if difficulty==0: xlim = [0, (maze_size/2 - tunnel_width)]
-            elif difficulty>0: xlim = [0, maze_size/2 - OBJECT_SPACING['plant']]
         food = np.asarray([np.random.uniform(*xlim), np.random.uniform(*ylim), sensorconfig.OBJECTS_DICT['pole']]).reshape(1,3)
     if mode=='donut':
         pass
-    return None
+    return food
