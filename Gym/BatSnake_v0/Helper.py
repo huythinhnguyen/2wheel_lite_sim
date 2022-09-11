@@ -1,13 +1,23 @@
 import numpy as np
+import os
+import sys
+import pathlib
 
-HIT_DISTANCE = {1: 0.3, 2: 0.4}
+if pathlib.Path(os.path.abspath(__file__)).parents[2] not in sys.path:
+    sys.path.append(pathlib.Path(os.path.abspath(__file__)).parents[2])
+
+from Sensors.BatEcho import Setting as sensorconfig
+from Arena import Builder
+
+HIT_DISTANCE = {'pole': 0.3, 'plant': 0.4}
+OBJECT_SPACING = {'pole': 0.1, 'plant': 0.3}
 MAZE_SIZE = 16.
-TUNNEL_SIZE = 3.
+TUNNEL_WIDTH = 3.
 
 
-def collision_check(inview, object_class):
-    inview_of_klass = inview[inview[:,2]==object_class][:,:2]
-    if np.sum(inview_of_klass[:,0]<HIT_DISTANCE[object_class]) > 0:
+def collision_check(inview, mode):
+    inview_of_klass = inview[inview[:,2]==sensorconfig.OBJECTS_DICT[mode]][:,:2]
+    if np.sum(inview_of_klass[:,0]<HIT_DISTANCE[mode]) > 0:
         return True
     else:
         return False
@@ -21,6 +31,30 @@ def reward_function(**kwargs):
     else: return 0
 
 
-def maze_builder(mode, maze_size=MAZE_SIZE, tunnel_size=TUNNEL_SIZE):
-    
-    return None
+def maze_builder(mode, maze_size=MAZE_SIZE, tunnel_width=TUNNEL_WIDTH):
+    if mode=='box':
+        starts, ends = [],[] 
+        starts.append([-maze_size/2, -maze_size/2])
+        ends.append([maze_size/2, -maze_size/2])
+        starts.append([maze_size/2, -maze_size/2])
+        ends.append([maze_size/2, maze_size/2])
+        starts.append([maze_size/2, maze_size/2])
+        ends.append([-maze_size/2, maze_size/2])
+        starts.append([-maze_size/2, maze_size/2])
+        ends.append([-maze_size/2, -maze_size/2])
+        #
+        starts.append([-(maze_size/2 - tunnel_width), -(maze_size/2 - tunnel_width)])
+        ends.append([(maze_size/2 - tunnel_width), -(maze_size/2 - tunnel_width)])
+        starts.append([(maze_size/2 - tunnel_width), -(maze_size/2 - tunnel_width)])
+        ends.append([(maze_size/2 - tunnel_width), (maze_size/2 - tunnel_width)])
+        starts.append([(maze_size/2 - tunnel_width), (maze_size/2 - tunnel_width)])
+        ends.append([-(maze_size/2 - tunnel_width), (maze_size/2 - tunnel_width)])
+        starts.append([-(maze_size/2 - tunnel_width), (maze_size/2 - tunnel_width)])
+        ends.append([-(maze_size/2 - tunnel_width), -(maze_size/2 - tunnel_width)])
+        #
+        spacings = OBJECT_SPACING['plant']*np.ones(8)
+        maze = Builder.build_walls(starts, ends, spacings)
+    elif mode=='donut':
+        maze = Builder.build_circles(np.zeros((2,2)), [maze_size/2, maze_size/2 - tunnel_width], OBJECT_SPACING['plant']*np.ones(2))
+
+    return np.hstack((maze, sensorconfig.OBJECTS_DICT['plant']*np.ones(len(maze),1)))
