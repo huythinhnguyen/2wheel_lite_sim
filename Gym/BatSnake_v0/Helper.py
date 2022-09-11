@@ -62,15 +62,19 @@ def maze_builder(mode, maze_size=MAZE_SIZE, tunnel_width=TUNNEL_WIDTH):
 
 def spawn_food(mode, level, difficulty=0, maze_size=MAZE_SIZE, tunnel_width=TUNNEL_WIDTH):
     if mode=='box':
-        if difficulty==0:
+        if level%4==0:
+            xlim = [(maze_size/2-tunnel_width) + OBJECT_SPACING['plant'], maze_size/2 - OBJECT_SPACING['plant']]
+            if difficulty==0: ylim = [0, (maze_size/2 - tunnel_width)]
+            elif difficulty>0: ylim = [[0, maze_size/2 - OBJECT_SPACING['plant']]]
+        elif level%4==1:
+            ylim = [(maze_size/2-tunnel_width) + OBJECT_SPACING['plant'], maze_size/2 - OBJECT_SPACING['plant']]
+            if difficulty==0: xlim = [-(maze_size/2 - tunnel_width), 0]
+            elif difficulty>0: xlim = [-(maze_size/2 - OBJECT_SPACING['plant']), 0]
+        elif level%4==2:
             pass
-        elif difficulty==1:
+        elif level%4==3:
             pass
-        elif difficulty>1:
-            pass
+
     if mode=='donut':
-        if difficulty==0:
-            pass
-        elif difficulty>0:
-            pass
+        pass
     return None
