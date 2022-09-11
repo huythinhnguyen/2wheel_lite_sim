@@ -58,3 +58,19 @@ def maze_builder(mode, maze_size=MAZE_SIZE, tunnel_width=TUNNEL_WIDTH):
         maze = Builder.build_circles(np.zeros((2,2)), [maze_size/2, maze_size/2 - tunnel_width], OBJECT_SPACING['plant']*np.ones(2))
 
     return np.hstack((maze, sensorconfig.OBJECTS_DICT['plant']*np.ones(len(maze),1)))
+
+
+def spawn_food(mode, level, difficulty=0, maze_size=MAZE_SIZE, tunnel_width=TUNNEL_WIDTH):
+    if mode=='box':
+        if difficulty==0:
+            pass
+        elif difficulty==1:
+            pass
+        elif difficulty>1:
+            pass
+    if mode=='donut':
+        if difficulty==0:
+            pass
+        elif difficulty>0:
+            pass
+    return None
