@@ -19,20 +19,19 @@ from Control.SensorimotorLoops import Setting as controlconfig
 from Simulation.Motion import State
 
 class DiscreteAction(py_environment.PyEnvironment):
-    def __init__(self, init_pose, time_limit):
+    def __init__(self, time_limit, level=0, phase=0, difficulty=0, mode='box'):
+        init_pose = help.spawn_bat(mode, phase)
         self.locomotion = State(pose = init_pose, dt=1/controlconfig.CHIRP_RATE)
         self.sensor = Spatializer.Render()
         self.controller = AvoidApproach()
-
-        self.objects = help.maze_builder(mode='box')
-
+        self.objects = help.maze_builder(mode=mode)
+        self.objects = np.vstack((help.spawn_food(mode, level, difficulty) , self.objects))
         self._action_spec=array_spec.BoundedArraySpec(shape=(), dtype=np.int32, minimum=0, maximum=1, name='action')
         self._observation_spec=array_spec.BoundedArraySpec(shape=(100,), dtype=np.float64, minimum=0, name='observation')
         self.echoes = self.sensor.run(pose=self.locomotion.pose, objects=self.objects)
         self._state = np.asarray(list(self.echoes.values())).reshape(-1,)
         self._episode_ended = False
-        self.time_limit = time_limit
-        self.cache = {'init_pose': init_pose}
+        self.cache = {'time_limit': time_limit, 'level': level, 'phase': phase, 'difficulty': difficulty, 'mode': mode}
         
 
     def action_spec(self):
@@ -67,11 +66,34 @@ class DiscreteAction(py_environment.PyEnvironment):
     
     def _reset(self, **kwargs):
         self._episode_ended=False
-        init_pose = kwargs['init_pose'] if 'init_pose' in kwargs.keys() else self.cache['init_pose']
+        for key, val in zip(kwargs.keys(), kwargs.values()):
+            self.cache[key] = val
+        init_pose = help.spawn_bat(self.cache['mode'], self.cache['phase'])
         self.locomotion = State(pose=init_pose, dt=1/controlconfig.CHIRP_RATE)
         self.sensor = Spatializer()
         self.controller = AvoidApproach()
-
+        self.objects[self.objects[:,2]==sensorconfig.OBJECTS_DICT['pole']]=help.spawn_food(self.cache['mode'],
+                                                                                           self.cache['level'], 
+                                                                                           self.cache['difficulty'])
+        self.echoes = self.sensor.run(pose=self.locomotion.pose, objects=self.objects)
+        self._state = np.asarray(list(self.echoes.values())).reshape(-1,)
+        
         return ts.restart(self._state)
 
+
+"""
+        if init_pose is None: init_pose = help.spawn_bat(mode, phase)
+        self.locomotion = State(pose = init_pose, dt=1/controlconfig.CHIRP_RATE)
+        self.sensor = Spatializer.Render()
+        self.controller = AvoidApproach()
+        self.objects = help.maze_builder(mode=mode)
+        self.objects = np.vstack((help.spawn_food(mode, level, difficulty) , self.objects))
+        self._action_spec=array_spec.BoundedArraySpec(shape=(), dtype=np.int32, minimum=0, maximum=1, name='action')
+        self._observation_spec=array_spec.BoundedArraySpec(shape=(100,), dtype=np.float64, minimum=0, name='observation')
+        self.echoes = self.sensor.run(pose=self.locomotion.pose, objects=self.objects)
+        self._state = np.asarray(list(self.echoes.values())).reshape(-1,)
+        self._episode_ended = False
+        self.cache = {'init_pose': init_pose, 'time_limit': time_limit, 
+                      'level': level, 'phase': phase, 'difficulty': difficulty, 'mode': mode}
+"""
     
