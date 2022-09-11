@@ -1,3 +1,8 @@
+### 09/10/22:
+- Kinda finished with the the sensorimotor control. Go back when feel better. --> Need to think of a new loop that can track IID to a constant value. Or even better. Track both IID and onset distance.
+- Now I'm focusing on rebuilding the Reinforcement Learning setup
+
+
 ### 09/04/22:
 - Quick observation of the Unified Loop: The factor is bias toward the avoid side.
 - The approach factor needs to be turned on all the way (>0.8, 0.9) to trigger a hit!
