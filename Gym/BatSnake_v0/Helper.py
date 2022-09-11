@@ -83,3 +83,8 @@ def spawn_food(mode, level, difficulty=0, maze_size=MAZE_SIZE, tunnel_width=TUNN
         phi = np.random.uniform(*Builder.wrap2pi(alim + (level%4)*(np.pi/2)))
         food = np.asarray([ *Builder.pol2cart(rho,phi), sensorconfig.OBJECTS_DICT['pole']]).reshape(1,3)
     return food
+
+
+def spawn_bat(mode, phase, maze_size=MAZE_SIZE, tunnel_width=TUNNEL_WIDTH, jitter=True):
+
+    return None
