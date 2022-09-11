@@ -65,15 +65,19 @@ def spawn_food(mode, level, difficulty=0, maze_size=MAZE_SIZE, tunnel_width=TUNN
         if level%4==0:
             xlim = [(maze_size/2-tunnel_width) + OBJECT_SPACING['plant'], maze_size/2 - OBJECT_SPACING['plant']]
             if difficulty==0: ylim = [0, (maze_size/2 - tunnel_width)]
-            elif difficulty>0: ylim = [[0, maze_size/2 - OBJECT_SPACING['plant']]]
+            elif difficulty>0: ylim = [0, maze_size/2 - OBJECT_SPACING['plant']]
         elif level%4==1:
             ylim = [(maze_size/2-tunnel_width) + OBJECT_SPACING['plant'], maze_size/2 - OBJECT_SPACING['plant']]
             if difficulty==0: xlim = [-(maze_size/2 - tunnel_width), 0]
             elif difficulty>0: xlim = [-(maze_size/2 - OBJECT_SPACING['plant']), 0]
         elif level%4==2:
-            pass
+            xlim = [-(maze_size/2 - OBJECT_SPACING['plant']),-(maze_size/2 - tunnel_width + OBJECT_SPACING['plant'])]
+            if difficulty==0: ylim = [0, -(maze_size/2 - tunnel_width)]
+            elif difficulty>0: ylim = [0, -(maze_size/2 - OBJECT_SPACING['plant'])]
         elif level%4==3:
-            pass
+            ylim = [-(maze_size/2 - OBJECT_SPACING['plant']), -(maze_size/2-tunnel_width+OBJECT_SPACING['plant'])]
+            if difficulty==0: xlim = [0, (maze_size/2 - tunnel_width)]
+            elif difficulty>0: xlim = [0, maze_size/2 - OBJECT_SPACING['plant']]
 
     if mode=='donut':
         pass
