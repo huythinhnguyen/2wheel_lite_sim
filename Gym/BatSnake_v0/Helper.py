@@ -13,6 +13,7 @@ HIT_DISTANCE = {'pole': 0.3, 'plant': 0.4}
 OBJECT_SPACING = {'pole': 0.1, 'plant': 0.3}
 MAZE_SIZE = 16.
 TUNNEL_WIDTH = 3.
+JITTER={'xy': 0.1, 'theta': np.pi/18}
 
 
 def collision_check(inview, mode):
@@ -85,6 +86,16 @@ def spawn_food(mode, level, difficulty=0, maze_size=MAZE_SIZE, tunnel_width=TUNN
     return food
 
 
-def spawn_bat(mode, phase, maze_size=MAZE_SIZE, tunnel_width=TUNNEL_WIDTH, jitter=True):
-
-    return None
+def spawn_bat(mode, phase, maze_size=MAZE_SIZE, tunnel_width=TUNNEL_WIDTH, jitter=True): 
+    if mode=='box':
+        pose_ls = [(maze_size/2-tunnel_width/2,-0.5,np.pi/2),(maze_size/2-tunnel_width/2,-1.0,np.pi/2),
+                   (maze_size/2-tunnel_width/2,-1.5,np.pi/2),(0,-(maze_size/2-tunnel_width/2),0.)]
+        pose = np.asarray([*pose_ls[phase]])
+    if mode=='donut':
+        rho = maze_size/2-tunnel_width/2
+        phi_ls = np.asarray([-1., -2., -3., -9])*(np.pi/18)
+        phi = phi_ls[phase]
+        pose = np.asarray([ *Builder.pol2cart(rho, phi), Builder.wrap2pi(phi + np.pi/2) ])
+    if jitter:
+        pose += np.asarray([JITTER['xy'], JITTER['xy'] , JITTER['theta']])*np.random.uniform(-1,-1,size=3)
+    return pose
