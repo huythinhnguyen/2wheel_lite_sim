@@ -74,8 +74,12 @@ def spawn_food(mode, level, difficulty=0, maze_size=MAZE_SIZE, tunnel_width=TUNN
         #
         xlim = xlim_ls_normal[int(level%4)] if difficulty==0 else xlim_ls_hard[int(level%4)]
         ylim = ylim_ls_normal[int(level%4)] if difficulty==0 else ylim_ls_hard[int(level%4)]
-        
+        #
         food = np.asarray([np.random.uniform(*xlim), np.random.uniform(*ylim), sensorconfig.OBJECTS_DICT['pole']]).reshape(1,3)
     if mode=='donut':
-        pass
+        rlim = (maze_size/2 - tunnel_width + OBJECT_SPACING['plant'], maze_size/2 - OBJECT_SPACING['plant'])
+        alim = np.asarray([0, (1+difficulty)*np.pi/9])
+        rho = np.random.uniform(*rlim)
+        phi = np.random.uniform(*Builder.wrap2pi(alim + (level%4)*(np.pi/2)))
+        food = np.asarray([ *Builder.pol2cart(rho,phi), sensorconfig.OBJECTS_DICT['pole']]).reshape(1,3)
     return food
