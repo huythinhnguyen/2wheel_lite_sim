@@ -1,7 +1,10 @@
+### 09/11/22:
+- Need to build the Trainer. Run a sample Traning on a simplified phase 1 mode to see if it works!
+- Spend some time to think of the IID tracking
+
 ### 09/10/22:
 - Kinda finished with the the sensorimotor control. Go back when feel better. --> Need to think of a new loop that can track IID to a constant value. Or even better. Track both IID and onset distance.
 - Now I'm focusing on rebuilding the Reinforcement Learning setup
-
 
 ### 09/04/22:
 - Quick observation of the Unified Loop: The factor is bias toward the avoid side.
