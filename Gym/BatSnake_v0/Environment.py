@@ -75,7 +75,7 @@ class DiscreteAction(py_environment.PyEnvironment):
             self.cache[key] = val
         init_pose = help.spawn_bat(self.cache['mode'], self.cache['phase'])
         self.locomotion = State(pose=init_pose, dt=1/controlconfig.CHIRP_RATE)
-        self.sensor = Spatializer()
+        self.sensor = Spatializer.Render()
         self.controller = AvoidApproach()
         self.objects[self.objects[:,2]==sensorconfig.OBJECTS_DICT['pole']]=help.spawn_food(self.cache['mode'],
                                                                                            self.cache['level'], 
