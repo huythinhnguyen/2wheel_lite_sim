@@ -1,4 +1,3 @@
-from importlib.resources import path
 import numpy as np
 import pathlib
 import os
