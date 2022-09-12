@@ -34,8 +34,9 @@ class DiscreteAction(py_environment.PyEnvironment):
         self.echoes = self.sensor.run(pose=self.locomotion.pose, objects=self.objects)
         self._state = np.asarray(list(self.echoes.values())).reshape(-1,)
         self._episode_ended = False
-        self.cache = {'time_limit': time_limit, 'level': level, 'phase': phase, 'difficulty': difficulty, 'mode': mode, 'max_level': max_level}
+        self.cache = {'time_limit': time_limit, 'init_level': level, 'phase': phase, 'difficulty': difficulty, 'mode': mode, 'max_level': max_level}
         self.step_count = 0
+        self.level = level
         
 
     def action_spec(self):
@@ -81,10 +82,10 @@ class DiscreteAction(py_environment.PyEnvironment):
         self.sensor = Spatializer.Render()
         self.controller = AvoidApproach()
         self.objects[self.objects[:,2]==sensorconfig.OBJECTS_DICT['pole']]=help.spawn_food(self.cache['mode'],
-                                                                                           self.cache['level'], 
+                                                                                           self.cache['init_level'], 
                                                                                            self.cache['difficulty'])
         self.echoes = self.sensor.run(pose=self.locomotion.pose, objects=self.objects)
         self._state = np.asarray(list(self.echoes.values())).reshape(-1,)
-
+        self.level = self.cache['init_level']
         return ts.restart(self._state)
 
