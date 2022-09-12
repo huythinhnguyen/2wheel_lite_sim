@@ -3,7 +3,7 @@ import os
 import sys
 import pathlib
 
-if str(pathlib.Path(os.path.abspath(__file__)).parents[2]) not in sys.path:
+if pathlib.Path(os.path.abspath(__file__)).parents[2] not in sys.path:
     sys.path.append(str(pathlib.Path(os.path.abspath(__file__)).parents[2]))
 
 from Sensors.BatEcho import Setting as sensorconfig
