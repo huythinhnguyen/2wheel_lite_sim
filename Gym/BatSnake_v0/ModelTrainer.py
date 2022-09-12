@@ -1,6 +1,7 @@
 import os
 import sys
 import pathlib
+from token import STAR
 
 if pathlib.Path(os.path.abspath(__file__)).parents[2] not in sys.path:
     sys.path.append(pathlib.Path(os.path.abspath(__file__)).parents[2])
@@ -8,6 +9,8 @@ if pathlib.Path(os.path.abspath(__file__)).parents[2] not in sys.path:
 import numpy as np
 import tensorflow as tf
 from .Environment import DiscreteAction
+
+from tf_agents.agents.dqn import dqn_agent
 
 from tf_agents.policies import random_tf_policy
 from tf_agents.networks import sequential
@@ -35,7 +38,12 @@ NUMBER_OF_EVAL_EPISODES = 10
 EVAL_STEPS_INTERVAL = 10_000
 
 STARTING_EPSILON = 0.8
+EPSILON_DECAY_COUNT = 100_000
+ENDING_EPSILON = 0.
 
+DISCOUNT_FACTOR = 1.
+TD_ERROR_LOSS_FUNCTION = common.element_wise_squared_loss
+TRAIN_STEP_COUNTER = tf.Variable(0)
 
 ### Build some Function building model here!
 ### Build some convenience saver if needed. :D
@@ -52,6 +60,19 @@ def q_network(hidden_layer_params, number_of_actions):
     hidden_net = [hidden_layer(number_of_units) for number_of_units in hidden_layer_params]
     q_layer = value_layer(number_of_actions)
     return sequential.Sequential(hidden_net + [q_layer])
+
+def summon_agent(environment, q_network, optimizer=tf.keras.optimizers.Adam(learning_rate=LEARNING_RATE),
+                starting_epsilon=STARTING_EPSILON, epsilon_delay_count=EPSILON_DECAY_COUNT, ending_epsilon=ENDING_EPSILON,
+                gamma = DISCOUNT_FACTOR, td_loss_fn = TD_ERROR_LOSS_FUNCTION):
+    return dqn_agent.DqnAgent(
+        time_step_spec=environment.time_step_spec(),
+        action_spec=environment.action_spec(),
+        q_network=q_network,
+        optimizer=optimizer,
+        epsilon_greedy=starting_epsilon,
+        epsilon_decay_end_count=epsilon_delay_count,
+        epsilon_decay_end_value=ending_epsilon,
+        gamma=gamma, td_errors_loss_fn=td_loss_fn, train_step_counter= TRAIN_STEP_COUNTER)
 
 def relay_buffer(agent, environment, relay_buffer_max_length):
     return tf_uniform_replay_buffer.TFUniformReplayBuffer(
