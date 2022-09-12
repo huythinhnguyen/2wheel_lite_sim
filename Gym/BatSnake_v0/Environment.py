@@ -18,6 +18,10 @@ from Sensors.BatEcho import Setting as sensorconfig
 from Control.SensorimotorLoops import Setting as controlconfig
 from Simulation.Motion import State
 
+
+OBSERVATION_SIZE = int(2*sensorconfig.RAW_DATA_LENGTH/sensorconfig.N_SAMPLE)
+
+
 class DiscreteAction(py_environment.PyEnvironment):
     def __init__(self, time_limit, level=0, phase=0, difficulty=0, mode='box', max_level=1):
         init_pose = help.spawn_bat(mode, phase)
@@ -27,7 +31,7 @@ class DiscreteAction(py_environment.PyEnvironment):
         self.objects = help.maze_builder(mode=mode)
         self.objects = np.vstack((help.spawn_food(mode, level, difficulty) , self.objects))
         self._action_spec=array_spec.BoundedArraySpec(shape=(), dtype=np.int32, minimum=0, maximum=1, name='action')
-        self._observation_spec=array_spec.BoundedArraySpec(shape=(100,), dtype=np.float64, minimum=0, name='observation')
+        self._observation_spec=array_spec.BoundedArraySpec(shape=(OBSERVATION_SIZE,), dtype=np.float64, minimum=0, name='observation')
         self.echoes = self.sensor.run(pose=self.locomotion.pose, objects=self.objects)
         self._state = np.asarray(list(self.echoes.values())).reshape(-1,)
         self._episode_ended = False
@@ -47,10 +51,10 @@ class DiscreteAction(py_environment.PyEnvironment):
         if self._episode_ended:
             return self._reset()
         # Open your eyes, see where you are
-        if help.collision_check(self.sensor.cache['inview'], sensorconfig.OBJECTS_DICT['plant']):
+        if help.collision_check(self.sensor.cache['inview'], 'plant'):
             reward += help.reward_function(hit='plant')
             self._episode_ended = True
-        elif help.collision_check(self.sensor.cache['inview'], sensorconfig.OBJECTS_DICT['pole']):
+        elif help.collision_check(self.sensor.cache['inview'], 'pole'):
             reward += help.reward_function(hit='pole')
             self.level += 1
         # Move according to action

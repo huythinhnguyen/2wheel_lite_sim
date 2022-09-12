@@ -3,11 +3,14 @@ import sys
 import pathlib
 
 if pathlib.Path(os.path.abspath(__file__)).parents[2] not in sys.path:
-    sys.path.append(pathlib.Path(os.path.abspath(__file__)).parents[2])
+    sys.path.append(str(pathlib.Path(os.path.abspath(__file__)).parents[2]))
+
+
+from Gym.BatSnake_v0.Environment import DiscreteAction
 
 import numpy as np
 import tensorflow as tf
-from .Environment import DiscreteAction
+
 
 from tf_agents.agents.dqn import dqn_agent
 from tf_agents.environments import tf_py_environment
