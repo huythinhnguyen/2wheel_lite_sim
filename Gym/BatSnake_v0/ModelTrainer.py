@@ -1,7 +1,6 @@
 import os
 import sys
 import pathlib
-from token import STAR
 
 if pathlib.Path(os.path.abspath(__file__)).parents[2] not in sys.path:
     sys.path.append(pathlib.Path(os.path.abspath(__file__)).parents[2])
@@ -11,6 +10,7 @@ import tensorflow as tf
 from .Environment import DiscreteAction
 
 from tf_agents.agents.dqn import dqn_agent
+from tf_agents.environments import tf_py_environment
 
 from tf_agents.policies import random_tf_policy
 from tf_agents.networks import sequential
@@ -29,8 +29,9 @@ HIDDEN_LAYER_PARAMS = (128, 128, 128, 64)
 TRAINING_STEPS = 100_000
 INITIAL_COLLECTION_STEPS = 1000
 COLLECT_STEPS_PER_ITERATION = 1
-RELAY_BUFFER_MAX_LENGTH = 500_000
+REPLAY_BUFFER_MAX_LENGTH = 500_000
 
+PARALLEL_CALLS = 8
 BATCH_SIZE = 1024
 LEARNING_RATE = 1e-4
 LOG_STEPS_INTERVAL = 2_000
@@ -40,10 +41,9 @@ EVAL_STEPS_INTERVAL = 10_000
 STARTING_EPSILON = 0.8
 EPSILON_DECAY_COUNT = 100_000
 ENDING_EPSILON = 0.
-
 DISCOUNT_FACTOR = 1.
 TD_ERROR_LOSS_FUNCTION = common.element_wise_squared_loss
-TRAIN_STEP_COUNTER = tf.Variable(0)
+TRAIN_STEP_COUNTER = 0
 
 ### Build some Function building model here!
 ### Build some convenience saver if needed. :D
@@ -72,12 +72,12 @@ def summon_agent(environment, q_network, optimizer=tf.keras.optimizers.Adam(lear
         epsilon_greedy=starting_epsilon,
         epsilon_decay_end_count=epsilon_delay_count,
         epsilon_decay_end_value=ending_epsilon,
-        gamma=gamma, td_errors_loss_fn=td_loss_fn, train_step_counter= TRAIN_STEP_COUNTER)
+        gamma=gamma, td_errors_loss_fn=td_loss_fn, train_step_counter= tf.Variable(TRAIN_STEP_COUNTER))
 
-def relay_buffer(agent, environment, relay_buffer_max_length):
+def summon_replay_buffer(agent, environment, max_length):
     return tf_uniform_replay_buffer.TFUniformReplayBuffer(
         data_spec = agent.collect_data_spec, batch_size= environment.batch_size, 
-        max_length=relay_buffer_max_length)
+        max_length=max_length)
 
 def collect_step(environment, policy, buffer):
     time_step = environment.current_time_step()
@@ -106,6 +106,75 @@ def compute_average_return(environment, policy, number_of_episodes, cache=False)
     else: return (total_return/number_of_episodes).numpy()[0]
 
 
+def train_v1(init_policy=None):
+    py_env = DiscreteAction(time_limit = 100)
+    tf_env = tf_py_environment.TFPyEnvironment(py_env)
+    action_tensor_spec = tensor_spec.from_spec(py_env.action_spec())
+    num_actions = action_tensor_spec.maximum - action_tensor_spec.minimum + 1
+    q_net = q_network(hidden_layer_params=HIDDEN_LAYER_PARAMS, number_of_actions=num_actions)
+    
+    eval_py_env = DiscreteAction(time_limit = 100)
+    eval_tf_env = tf_py_environment.TFPyEnvironment(eval_py_env)
+
+    agent = summon_agent(tf_env, q_net)
+    agent.initialize()
+    eval_policy = agent.policy
+    collect_policy = agent.collect_policy
+    
+    ### COLLECT INIT REPLAY BUFFER
+
+    replay_buffer = summon_replay_buffer(agent=agent, environment=tf_env, max_length=REPLAY_BUFFER_MAX_LENGTH)
+    if init_policy is None: init_policy = random_tf_policy.RandomTFPolicy(tf_env.time_step_spec(), tf_env.action_spec())
+    collect_data(tf_env, init_policy, replay_buffer, INITIAL_COLLECTION_STEPS)
+    dataset = replay_buffer.as_dataset(
+        num_parallel_calls=PARALLEL_CALLS,
+        sample_batch_size=BATCH_SIZE,
+        num_steps=2,
+        single_deterministic_pass=False).prefetch(PARALLEL_CALLS)
+    iterator = iter(dataset)
+
+    ### TRAINING START HERE.
+    agent.train = common.function(agent.train)
+    agent.train_step_counter.assign(TRAIN_STEP_COUNTER)
+    
+    average_return = compute_average_return(eval_tf_env, agent.policy, NUMBER_OF_EVAL_EPISODES, cache=False)
+    returns = [average_return]
+    losses = []
+
+    for _ in range(TRAINING_STEPS):
+        collect_data(tf_env, agent.collect_policy, replay_buffer, COLLECT_STEPS_PER_ITERATION)
+        experience, used_info = next(iterator)
+        train_loss = agent.train(experience).loss
+        step = agent.train_step_counter.numpy()
+
+        if step % LOG_STEPS_INTERVAL == 0:
+            print('step={0}: loss={1}'.format(step, train_loss))
+            losses.append(train_loss)
+        if step % EVAL_STEPS_INTERVAL == 0:
+            average_return = compute_average_return(eval_tf_env, agent.policy, NUMBER_OF_EVAL_EPISODES, cache=False)
+            print('step={0}: return={1}'.format(step, average_return))
+            returns.append(average_return)
+
+    from matplotlib import pyplot as plt
+
+    fig, ax = plt.subplot(2,1)
+    ax[0].plot(returns)
+    ax[0].set_ylabel('average episode return')
+    ax[0].set_xlabel('training steps')
+    ax[1].plot(losses)
+    ax[1].set_ylabel('loss')
+    ax[1].set_xlabel('training steps')
+    plt.show()
+
+    from tf_agents.policies import policy_saver
+    print('Current Dir:', os.getcwd())
+    save_path = input('ENTER SAVE PATH FOR POLICY')
+    policy_dir = os.path.join(os.cwd(), save_path)
+    tf_policy_saver = policy_saver.PolicySaver(agent.policy)
+    tf_policy_saver.save(policy_dir)
+
+    return 
+
 
 if __name__=='__main__':
-    pass
+    train_v1()
