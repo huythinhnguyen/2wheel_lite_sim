@@ -9,8 +9,8 @@ from tf_agents.specs import array_spec
 from tf_agents.trajectories import time_step as ts
 
 from . import Helper as help
-if pathlib.Path(os.path.abspath(__file__)).parents[2] not in sys.path:
-    sys.path.append(pathlib.Path(os.path.abspath(__file__)).parents[2])
+if str(pathlib.Path(os.path.abspath(__file__)).parents[2]) not in sys.path:
+    sys.path.append(str(pathlib.Path(os.path.abspath(__file__)).parents[2]))
 
 from Sensors.BatEcho import Spatializer
 from Control.SensorimotorLoops.BatEcho import AvoidApproach
