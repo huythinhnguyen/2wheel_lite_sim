@@ -19,7 +19,7 @@ from Control.SensorimotorLoops import Setting as controlconfig
 from Simulation.Motion import State
 
 class DiscreteAction(py_environment.PyEnvironment):
-    def __init__(self, time_limit, level=0, phase=0, difficulty=0, mode='box'):
+    def __init__(self, time_limit, level=0, phase=0, difficulty=0, mode='box', max_level=1):
         init_pose = help.spawn_bat(mode, phase)
         self.locomotion = State(pose = init_pose, dt=1/controlconfig.CHIRP_RATE)
         self.sensor = Spatializer.Render()
@@ -31,7 +31,8 @@ class DiscreteAction(py_environment.PyEnvironment):
         self.echoes = self.sensor.run(pose=self.locomotion.pose, objects=self.objects)
         self._state = np.asarray(list(self.echoes.values())).reshape(-1,)
         self._episode_ended = False
-        self.cache = {'time_limit': time_limit, 'level': level, 'phase': phase, 'difficulty': difficulty, 'mode': mode}
+        self.cache = {'time_limit': time_limit, 'level': level, 'phase': phase, 'difficulty': difficulty, 'mode': mode, 'max_level': max_level}
+        self.step_count = 0
         
 
     def action_spec(self):
@@ -51,6 +52,7 @@ class DiscreteAction(py_environment.PyEnvironment):
             self._episode_ended = True
         elif help.collision_check(self.sensor.cache['inview'], sensorconfig.OBJECTS_DICT['pole']):
             reward += help.reward_function(hit='pole')
+            self.level += 1
         # Move according to action
         v, omega = self.controller.get_kinematic(self.echoes, approach_factor=action)
         self.locomotion.update_kinematic(kinematic=[v, omega])
@@ -58,6 +60,9 @@ class DiscreteAction(py_environment.PyEnvironment):
         self.echoes = self.sensor.run(pose=self.locomotion.pose, objects=self.objects)
         self._state = np.asarray(list(self.echoes.values())).reshape(-1,)
         # 
+        self.step_count += 1
+        if self.step_count >= self.cache['time_limit'] or self.level >= self.cache['max_level']:
+            self._episode_ended = True
         if self._episode_ended:
             return ts.termination(self._state, reward=reward)
         else:
@@ -77,23 +82,6 @@ class DiscreteAction(py_environment.PyEnvironment):
                                                                                            self.cache['difficulty'])
         self.echoes = self.sensor.run(pose=self.locomotion.pose, objects=self.objects)
         self._state = np.asarray(list(self.echoes.values())).reshape(-1,)
-        
+
         return ts.restart(self._state)
 
-
-"""
-        if init_pose is None: init_pose = help.spawn_bat(mode, phase)
-        self.locomotion = State(pose = init_pose, dt=1/controlconfig.CHIRP_RATE)
-        self.sensor = Spatializer.Render()
-        self.controller = AvoidApproach()
-        self.objects = help.maze_builder(mode=mode)
-        self.objects = np.vstack((help.spawn_food(mode, level, difficulty) , self.objects))
-        self._action_spec=array_spec.BoundedArraySpec(shape=(), dtype=np.int32, minimum=0, maximum=1, name='action')
-        self._observation_spec=array_spec.BoundedArraySpec(shape=(100,), dtype=np.float64, minimum=0, name='observation')
-        self.echoes = self.sensor.run(pose=self.locomotion.pose, objects=self.objects)
-        self._state = np.asarray(list(self.echoes.values())).reshape(-1,)
-        self._episode_ended = False
-        self.cache = {'init_pose': init_pose, 'time_limit': time_limit, 
-                      'level': level, 'phase': phase, 'difficulty': difficulty, 'mode': mode}
-"""
-    
