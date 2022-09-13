@@ -10,7 +10,7 @@ from Gym.BatSnake_v0.Environment import DiscreteAction
 
 import numpy as np
 import tensorflow as tf
-
+tf.autograph.set_verbosity(2)
 
 from tf_agents.agents.dqn import dqn_agent
 from tf_agents.environments import tf_py_environment
@@ -29,22 +29,22 @@ from tensorflow.keras.activations import relu, linear
 
 HIDDEN_LAYER_PARAMS = (128, 128, 128, 64)
 
-TRAINING_STEPS = 100_000
-INITIAL_COLLECTION_STEPS = 1000
+TRAINING_STEPS = 200_000
+INITIAL_COLLECTION_STEPS = 1_000
 COLLECT_STEPS_PER_ITERATION = 1
-REPLAY_BUFFER_MAX_LENGTH = 500_000
+REPLAY_BUFFER_MAX_LENGTH = 100_000
 
 PARALLEL_CALLS = 8
 BATCH_SIZE = 1024
-LEARNING_RATE = 1e-4
-LOG_STEPS_INTERVAL = 2_000
-NUMBER_OF_EVAL_EPISODES = 10
-EVAL_STEPS_INTERVAL = 10_000
+LEARNING_RATE = 1e-3
+LOG_STEPS_INTERVAL = 20_000
+NUMBER_OF_EVAL_EPISODES = 5
+EVAL_STEPS_INTERVAL = 100_000
 
 STARTING_EPSILON = 0.8
-EPSILON_DECAY_COUNT = 100_000
-ENDING_EPSILON = 0.
-DISCOUNT_FACTOR = 1.
+EPSILON_DECAY_COUNT = 200_000
+ENDING_EPSILON = 0.2
+DISCOUNT_FACTOR = 0.999
 TD_ERROR_LOSS_FUNCTION = common.element_wise_squared_loss
 TRAIN_STEP_COUNTER = 0
 
@@ -92,7 +92,7 @@ def collect_data(environment, policy, buffer, steps):
     for _ in range(steps):
         collect_step(environment, policy, buffer)
 
-def compute_average_return(environment, policy, number_of_episodes, cache=False):
+def compute_average_return(environment, policy, number_of_episodes, getcache=False):
     total_return = 0
     cache = []
     for episode in range(number_of_episodes):
@@ -105,7 +105,7 @@ def compute_average_return(environment, policy, number_of_episodes, cache=False)
         else:
             total_return += episode_return
             cache.append(episode_return.numpy()[0])
-    if cache: return (total_return/number_of_episodes).numpy()[0], cache
+    if getcache: return (total_return/number_of_episodes).numpy()[0], cache
     else: return (total_return/number_of_episodes).numpy()[0]
 
 
@@ -140,7 +140,7 @@ def train_v1(init_policy=None):
     agent.train = common.function(agent.train)
     agent.train_step_counter.assign(TRAIN_STEP_COUNTER)
     
-    average_return = compute_average_return(eval_tf_env, agent.policy, NUMBER_OF_EVAL_EPISODES, cache=False)
+    average_return = compute_average_return(eval_tf_env, agent.policy, NUMBER_OF_EVAL_EPISODES, getcache=False)
     returns = [average_return]
     losses = []
 
