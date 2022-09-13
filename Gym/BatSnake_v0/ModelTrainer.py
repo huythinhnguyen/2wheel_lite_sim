@@ -160,7 +160,7 @@ def train_v1(init_policy=None):
 
     from matplotlib import pyplot as plt
 
-    fig, ax = plt.subplot(2,1)
+    fig, ax = plt.subplots(2,1)
     ax[0].plot(returns)
     ax[0].set_ylabel('average episode return')
     ax[0].set_xlabel('training steps')
