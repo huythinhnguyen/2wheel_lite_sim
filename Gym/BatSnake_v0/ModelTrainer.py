@@ -29,21 +29,21 @@ from tensorflow.keras.activations import relu, linear
 
 HIDDEN_LAYER_PARAMS = (128, 128, 128, 64)
 
-TRAINING_STEPS = 200_000
+TRAINING_STEPS = 500_000
 INITIAL_COLLECTION_STEPS = 1_000
 COLLECT_STEPS_PER_ITERATION = 1
-REPLAY_BUFFER_MAX_LENGTH = 100_000
+REPLAY_BUFFER_MAX_LENGTH = 200_000
 
 PARALLEL_CALLS = 8
 BATCH_SIZE = 1024
-LEARNING_RATE = 1e-3
-LOG_STEPS_INTERVAL = 20_000
+LEARNING_RATE = 5e-4
+LOG_STEPS_INTERVAL = 50_000
 NUMBER_OF_EVAL_EPISODES = 5
 EVAL_STEPS_INTERVAL = 100_000
 
 STARTING_EPSILON = 0.8
-EPSILON_DECAY_COUNT = 200_000
-ENDING_EPSILON = 0.2
+EPSILON_DECAY_COUNT = 400_000
+ENDING_EPSILON = 0.
 DISCOUNT_FACTOR = 0.999
 TD_ERROR_LOSS_FUNCTION = common.element_wise_squared_loss
 TRAIN_STEP_COUNTER = 0
@@ -110,13 +110,13 @@ def compute_average_return(environment, policy, number_of_episodes, getcache=Fal
 
 
 def train_v1(init_policy=None):
-    py_env = DiscreteAction(time_limit = 100)
+    py_env = DiscreteAction(time_limit = 200)
     tf_env = tf_py_environment.TFPyEnvironment(py_env)
-    action_tensor_spec = tensor_spec.from_spec(py_env.action_spec())
-    num_actions = action_tensor_spec.maximum - action_tensor_spec.minimum + 1
+    #action_tensor_spec = tensor_spec.from_spec(py_env.action_spec())
+    num_actions = 2 #action_tensor_spec.maximum - action_tensor_spec.minimum + 1
     q_net = q_network(hidden_layer_params=HIDDEN_LAYER_PARAMS, number_of_actions=num_actions)
     
-    eval_py_env = DiscreteAction(time_limit = 100)
+    eval_py_env = DiscreteAction(time_limit = 200)
     eval_tf_env = tf_py_environment.TFPyEnvironment(eval_py_env)
 
     agent = summon_agent(tf_env, q_net)
@@ -154,7 +154,7 @@ def train_v1(init_policy=None):
             print('step={0}: loss={1}'.format(step, train_loss))
             losses.append(train_loss)
         if step % EVAL_STEPS_INTERVAL == 0:
-            average_return = compute_average_return(eval_tf_env, agent.policy, NUMBER_OF_EVAL_EPISODES, cache=False)
+            average_return = compute_average_return(eval_tf_env, agent.policy, NUMBER_OF_EVAL_EPISODES, getcache=False)
             print('step={0}: return={1}'.format(step, average_return))
             returns.append(average_return)
 
