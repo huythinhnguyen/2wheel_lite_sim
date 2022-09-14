@@ -15,7 +15,7 @@ tf.autograph.set_verbosity(2)
 from tf_agents.agents.dqn import dqn_agent
 from tf_agents.environments import tf_py_environment
 
-from tf_agents.policies import random_tf_policy
+from tf_agents.policies import random_tf_policy, policy_saver
 from tf_agents.networks import sequential
 from tf_agents.replay_buffers import tf_uniform_replay_buffer
 from tf_agents.trajectories import trajectory
@@ -36,17 +36,21 @@ REPLAY_BUFFER_MAX_LENGTH = 500_000
 
 PARALLEL_CALLS = 8
 BATCH_SIZE = 1024
-LEARNING_RATE = 5e-4
-LOG_STEPS_INTERVAL = 50_000
+LEARNING_RATE = 3e-4
+LOG_STEPS_INTERVAL = 10_000
 NUMBER_OF_EVAL_EPISODES = 10
-EVAL_STEPS_INTERVAL = 100_000
+EVAL_STEPS_INTERVAL = 50_000
 
 STARTING_EPSILON = 0.8
-EPSILON_DECAY_COUNT = 800_000
+EPSILON_DECAY_COUNT = 1000_000
 ENDING_EPSILON = 0.
 DISCOUNT_FACTOR = 0.999
 TD_ERROR_LOSS_FUNCTION = common.element_wise_squared_loss
 TRAIN_STEP_COUNTER = 0
+
+DATE = '09.14.22'
+NOTES =''
+CHECKPOINT_DIRECTORY = ''
 
 ### Build some Function building model here!
 ### Build some convenience saver if needed. :D
@@ -110,13 +114,14 @@ def compute_average_return(environment, policy, number_of_episodes, getcache=Fal
 
 
 def train_v1(init_policy=None):
-    py_env = DiscreteAction(time_limit = 150, log=True)
+    phase = 0
+    py_env = DiscreteAction(time_limit = 250, phase=phase, log=True)
     tf_env = tf_py_environment.TFPyEnvironment(py_env)
     #action_tensor_spec = tensor_spec.from_spec(py_env.action_spec())
     num_actions = 2 #action_tensor_spec.maximum - action_tensor_spec.minimum + 1
     q_net = q_network(hidden_layer_params=HIDDEN_LAYER_PARAMS, number_of_actions=num_actions)
     
-    eval_py_env = DiscreteAction(time_limit = 150, log=True)
+    eval_py_env = DiscreteAction(time_limit = 250, phase=phase, log=True)
     eval_tf_env = tf_py_environment.TFPyEnvironment(eval_py_env)
 
     agent = summon_agent(tf_env, q_net)
@@ -140,9 +145,22 @@ def train_v1(init_policy=None):
     agent.train = common.function(agent.train)
     agent.train_step_counter.assign(TRAIN_STEP_COUNTER)
     
-    average_return = compute_average_return(eval_tf_env, eval_policy, NUMBER_OF_EVAL_EPISODES, getcache=False)
-    returns = [average_return]
+    #average_return = compute_average_return(eval_tf_env, eval_policy, NUMBER_OF_EVAL_EPISODES, getcache=False)
+    returns = []
     losses = []
+    training_episodes = []
+    training_steps = []
+    phases = []
+
+    print('Current Dir:', os.getcwd())
+    if CHECKPOINT_DIRECTORY=='':
+        prompt = input('ENTER SAVE PATH FOR POLICY')
+        save_dir = os.path.join(os.get_cwd(), prompt+'/'+DATE+NOTES)
+    else: save_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), CHECKPOINT_DIRECTORY+'/'+DATE+NOTES)
+    print('Policy will be save to:\n', save_dir)
+    policy_dir = os.path.join(save_dir, 'policy')
+    tf_policy_saver = policy_saver.PolicySaver(eval_policy)
+    
 
     for _ in range(TRAINING_STEPS):
         collect_data(tf_env, collect_policy, replay_buffer, COLLECT_STEPS_PER_ITERATION)
@@ -154,11 +172,27 @@ def train_v1(init_policy=None):
             print('step={0}: loss={1}'.format(step, train_loss))
             losses.append(train_loss)
         if step % EVAL_STEPS_INTERVAL == 0:
+            # save policy:
+            tf_policy_saver.save(policy_dir+str(int(step/1e3))+'K_steps')
             print('--- Evaluation ---')
             eval_py_env.episode = 0
             average_return = compute_average_return(eval_tf_env, eval_policy, NUMBER_OF_EVAL_EPISODES, getcache=False)
             print('step={0}: return={1}'.format(step, average_return))
             returns.append(average_return)
+            training_episodes.append(py_env.episode)
+            training_steps.append(step)
+            phases.append(phase)
+            if np.mean(returns[-5:])>0.9 and phase<3:
+                phase += 0
+                py_env.cache['phase']=phase
+                eval_py_env.cache['phase']=phase
+            np.savez(save_dir+'/return_loss_log.npz', losses=np.asarray(losses), returns=np.asarray(returns),
+                    episodes=np.asarray(training_episodes), steps=np.asarray(training_steps), phases=np.asarray(phases))
+            np.savez(save_dir+'/training_log.npz', episodes=np.asarray(py_env.records['episode']), step=np.asarray(py_env.records['step']),
+                    hit=np.asarray(py_env.records['hit']), success=np.asarray(py_env.records['success']), 
+                    timeout=np.asarray(py_env.records['timeout']), outbound=np.asarray(py_env.records['outbound']))
+
+
 
     from matplotlib import pyplot as plt
 
@@ -171,15 +205,7 @@ def train_v1(init_policy=None):
     ax[1].set_xlabel('training steps')
     plt.show()
 
-    from tf_agents.policies import policy_saver
-    print('Current Dir:', os.getcwd())
-    save_path = input('ENTER SAVE PATH FOR POLICY')
-    policy_dir = os.path.join(os.cwd(), save_path)
-    tf_policy_saver = policy_saver.PolicySaver(agent.policy)
-    tf_policy_saver.save(policy_dir)
-
-    return 
-
+    return None
 
 if __name__=='__main__':
     train_v1()
