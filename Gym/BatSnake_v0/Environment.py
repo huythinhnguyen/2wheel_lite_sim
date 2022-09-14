@@ -42,7 +42,7 @@ class DiscreteAction(py_environment.PyEnvironment):
         if log:
             self.episode = 0
             self.status = ''
-            self.episode_recors = []
+            self.records = {}
         
 
     def action_spec(self):
@@ -73,12 +73,12 @@ class DiscreteAction(py_environment.PyEnvironment):
         #
         if help.out_of_bound(pose=self.locomotion.pose, mode=self.cache['mode']):
             self._episode_ended = True
-            if self.log: self.status = 'out of bound'
+            if self.log: self.status = 'outbound'
         #
         self.step_count += 1
         if self.step_count >= self.cache['time_limit'] or self.level >= self.cache['max_level']:
             self._episode_ended = True
-            if self.log: self.status = 'got food' if reward>0 else 'out of time'
+            if self.log: self.status = 'success' if reward>0 else 'timeout'
         if self._episode_ended:
             return ts.termination(self._state, reward=reward)
         else:
@@ -86,9 +86,23 @@ class DiscreteAction(py_environment.PyEnvironment):
 
     
     def _reset(self, **kwargs):
-        if self.log: 
-            print('episode {0} : {1} steps, ({2},{3}) ending pose | '.format( self.episode, self.step_count, *np.round(self.locomotion.pose[:2],1)) + self.status)
+        if self.log:
+            print('episode {0} : {1} steps, ({2},{3}) ending pose | '.format( self.episode, self.step_count, *np.round(self.locomotion.pose[:2],2)) + self.status)
             self.status = ''
+            if self.episode > 0:
+                if 'episode' not in self.records.keys(): self.records['episode'] = [self.episode]
+                else: self.records['episode'].append(self.episode)
+                if 'steps' not in self.records.keys(): self.records['steps'] = [self.step_count]
+                else: self.records['episode'].append(self.episode)
+                if 'hit' not in self.records.keys(): self.records['hit'] = 1 if self.status=='hit' else 0
+                else: self.records['hit'] += 1 if self.status=='hit' else 0
+                if 'success' not in self.records.keys(): self.records['success'] = 1 if self.status=='success' else 0
+                else: self.records['success'] += 1 if self.status=='success' else 0
+                if 'timeout' not in self.records.keys(): self.records['timeout'] = 1 if self.status=='timeout' else 0
+                else: self.records['timeout'] += 1 if self.status=='timeout' else 0
+                if 'outbound' not in self.records.keys(): self.records['outbound'] = 1 if self.status=='outbound' else 0
+                else: self.records['outbound'] += 1 if self.status=='outbound' else 0
+            else: self.records.clear()
             self.episode+=1
         self._episode_ended=False
         for key, val in zip(kwargs.keys(), kwargs.values()):
@@ -97,10 +111,10 @@ class DiscreteAction(py_environment.PyEnvironment):
         self.locomotion = State(pose=init_pose, dt=1/controlconfig.CHIRP_RATE)
         self.sensor = Spatializer.Render()
         self.controller = AvoidApproach()
-        #self.objects[self.objects[:,2]==sensorconfig.OBJECTS_DICT['pole']]=help.spawn_food(self.cache['mode'],
-        #                                                                                   self.cache['init_level'], 
-        #                                                                                   self.cache['difficulty'])
-        self.objects[0] = np.asarray([(help.MAZE_SIZE/2-help.TUNNEL_WIDTH/4),1.,1])
+        self.objects[self.objects[:,2]==sensorconfig.OBJECTS_DICT['pole']]=help.spawn_food(self.cache['mode'],
+                                                                                           self.cache['init_level'], 
+                                                                                           self.cache['difficulty'])
+        #self.objects[0] = np.asarray([(help.MAZE_SIZE/2-help.TUNNEL_WIDTH/4),1.,1])
         self.echoes = self.sensor.run(pose=self.locomotion.pose, objects=self.objects)
         self._state = np.asarray(list(self.echoes.values())).reshape(-1,)
         self.level = self.cache['init_level']
