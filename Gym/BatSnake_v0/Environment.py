@@ -94,14 +94,14 @@ class DiscreteAction(py_environment.PyEnvironment):
                 else: self.records['episode'].append(self.episode)
                 if 'steps' not in self.records.keys(): self.records['steps'] = [self.step_count]
                 else: self.records['episode'].append(self.episode)
-                if 'hit' not in self.records.keys(): self.records['hit'] = 1 if self.status=='hit' else 0
-                else: self.records['hit'] += 1 if self.status=='hit' else 0
-                if 'success' not in self.records.keys(): self.records['success'] = 1 if self.status=='success' else 0
-                else: self.records['success'] += 1 if self.status=='success' else 0
-                if 'timeout' not in self.records.keys(): self.records['timeout'] = 1 if self.status=='timeout' else 0
-                else: self.records['timeout'] += 1 if self.status=='timeout' else 0
-                if 'outbound' not in self.records.keys(): self.records['outbound'] = 1 if self.status=='outbound' else 0
-                else: self.records['outbound'] += 1 if self.status=='outbound' else 0
+                if 'hit' not in self.records.keys(): self.records['hit'] = [1] if self.status=='hit' else [0]
+                else: self.records['hit'].append(1 if self.status=='hit' else 0)
+                if 'success' not in self.records.keys(): self.records['success'] = [1] if self.status=='success' else [0]
+                else: self.records['success'].append(1 if self.status=='success' else 0)
+                if 'timeout' not in self.records.keys(): self.records['timeout'] = [1] if self.status=='timeout' else [0]
+                else: self.records['timeout'].append(1 if self.status=='timeout' else 0)
+                if 'outbound' not in self.records.keys(): self.records['outbound'] = [1] if self.status=='outbound' else [0]
+                else: self.records['outbound'].append(1 if self.status=='outbound' else 0)
             else: self.records.clear()
             self.episode+=1
         self._episode_ended=False
