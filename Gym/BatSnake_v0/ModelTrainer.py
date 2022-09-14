@@ -155,6 +155,7 @@ def train_v1(init_policy=None):
             losses.append(train_loss)
         if step % EVAL_STEPS_INTERVAL == 0:
             print('--- Evaluation ---')
+            eval_py_env.episode = 0
             average_return = compute_average_return(eval_tf_env, eval_policy, NUMBER_OF_EVAL_EPISODES, getcache=False)
             print('step={0}: return={1}'.format(step, average_return))
             returns.append(average_return)
