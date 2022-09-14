@@ -155,7 +155,7 @@ def train_v1(init_policy=None):
     print('Current Dir:', os.getcwd())
     if CHECKPOINT_DIRECTORY=='':
         prompt = input('ENTER SAVE PATH FOR POLICY')
-        save_dir = os.path.join(os.get_cwd(), prompt+'/'+DATE+NOTES)
+        save_dir = os.path.join(os.getcwd(), prompt+'/'+DATE+NOTES)
     else: save_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), CHECKPOINT_DIRECTORY+'/'+DATE+NOTES)
     print('Policy will be save to:\n', save_dir)
     policy_dir = os.path.join(save_dir, 'policy')
