@@ -28,8 +28,8 @@ class DiscreteAction(py_environment.PyEnvironment):
         self.sensor = Spatializer.Render()
         self.controller = AvoidApproach()
         self.objects = help.maze_builder(mode=mode)
-        #self.objects = np.vstack((help.spawn_food(mode, level, difficulty) , self.objects))
-        self.objects = np.vstack((np.asarray([ (help.MAZE_SIZE/2-help.TUNNEL_WIDTH/4),1.,1]).reshape(1,3) , self.objects))
+        self.objects = np.vstack((help.spawn_food(mode, level, difficulty) , self.objects))
+        #self.objects = np.vstack((np.asarray([ (help.MAZE_SIZE/2-help.TUNNEL_WIDTH/4),1.,1]).reshape(1,3) , self.objects))
         self._action_spec=array_spec.BoundedArraySpec(shape=(), dtype=np.int32, minimum=0, maximum=1, name='action')
         self._observation_spec=array_spec.BoundedArraySpec(shape=(OBSERVATION_SIZE,), dtype=np.float64, minimum=0, name='observation')
         self.echoes = self.sensor.run(pose=self.locomotion.pose, objects=self.objects)
@@ -42,6 +42,7 @@ class DiscreteAction(py_environment.PyEnvironment):
         if log:
             self.episode = 0
             self.status = ''
+            self.episode_recors = []
         
 
     def action_spec(self):
@@ -72,7 +73,7 @@ class DiscreteAction(py_environment.PyEnvironment):
         #
         if help.out_of_bound(pose=self.locomotion.pose, mode=self.cache['mode']):
             self._episode_ended = True
-            if self.log: self.status = 'out of log'
+            if self.log: self.status = 'out of bound'
         #
         self.step_count += 1
         if self.step_count >= self.cache['time_limit'] or self.level >= self.cache['max_level']:
