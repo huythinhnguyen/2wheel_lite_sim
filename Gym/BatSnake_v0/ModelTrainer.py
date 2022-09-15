@@ -181,7 +181,7 @@ def train_v1(init_policy=None):
             eval_py_env.episode = 0
             average_return = compute_average_return(eval_tf_env, eval_policy, NUMBER_OF_EVAL_EPISODES, getcache=False)
             time_elapse = np.round(time.time() - tic)
-            print('step={0}: return={1}. Time elapse: {2}h{3}m'.format(step, average_return, np.floor(time_elapse/3600), np.round(time_elapse%3600/60)))
+            print('step={0}: return={1}. Time elapse: {2}h{3}m'.format(step, average_return, int(np.floor(time_elapse/3600)), int(np.round(time_elapse%3600/60))))
             returns.append(average_return)
             training_episodes.append(py_env.episode)
             training_steps.append(step)
