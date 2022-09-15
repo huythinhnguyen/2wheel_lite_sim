@@ -30,21 +30,21 @@ from tensorflow.keras.activations import relu, linear
 
 HIDDEN_LAYER_PARAMS = (128, 128, 128, 64)
 
-TRAINING_STEPS = 1_000_000
+TRAINING_STEPS = 2_000_000
 INITIAL_COLLECTION_STEPS = 1_000
 COLLECT_STEPS_PER_ITERATION = 1
 REPLAY_BUFFER_MAX_LENGTH = 500_000
 
-PARALLEL_CALLS = 8
+PARALLEL_CALLS = 32
 BATCH_SIZE = 1024
 LEARNING_RATE = 3e-4
-LOG_STEPS_INTERVAL = 10_000
+LOG_STEPS_INTERVAL = 20_000
 NUMBER_OF_EVAL_EPISODES = 10
-EVAL_STEPS_INTERVAL = 50_000
+EVAL_STEPS_INTERVAL = 20_000
 
 STARTING_EPSILON = 0.8
-EPSILON_DECAY_COUNT = 1000_000
-ENDING_EPSILON = 0.
+EPSILON_DECAY_COUNT = 2_000_000
+ENDING_EPSILON = 0.1
 DISCOUNT_FACTOR = 0.999
 TD_ERROR_LOSS_FUNCTION = common.element_wise_squared_loss
 TRAIN_STEP_COUNTER = 0
@@ -52,6 +52,7 @@ TRAIN_STEP_COUNTER = 0
 DATE = '09.15.22'
 NOTES =''
 CHECKPOINT_DIRECTORY = 'Gym/BatSnake_v0/TrainAgents'
+TIME_LIMIT = 250
 
 ### Build some Function building model here!
 ### Build some convenience saver if needed. :D
@@ -116,13 +117,13 @@ def compute_average_return(environment, policy, number_of_episodes, getcache=Fal
 
 def train_v1(init_policy=None):
     phase = 0
-    py_env = DiscreteAction(time_limit = 250, phase=phase, log=True)
+    py_env = DiscreteAction(time_limit = TIME_LIMIT, phase=phase, log=True)
     tf_env = tf_py_environment.TFPyEnvironment(py_env)
     #action_tensor_spec = tensor_spec.from_spec(py_env.action_spec())
     num_actions = 2 #action_tensor_spec.maximum - action_tensor_spec.minimum + 1
     q_net = q_network(hidden_layer_params=HIDDEN_LAYER_PARAMS, number_of_actions=num_actions)
     
-    eval_py_env = DiscreteAction(time_limit = 250, phase=phase, log=True)
+    eval_py_env = DiscreteAction(time_limit = TIME_LIMIT, phase=phase, log=True)
     eval_tf_env = tf_py_environment.TFPyEnvironment(eval_py_env)
 
     agent = summon_agent(tf_env, q_net)
@@ -187,8 +188,9 @@ def train_v1(init_policy=None):
             training_steps.append(step)
             phases.append(phase)
             times.append(time_elapse)
-            if np.mean(returns[-5:])>0.9 and phase<3:
+            if np.mean(returns[-10:])>0.8 and phase<2:
                 phase += 0
+                print('TRAINING IN PHASE {0}'.format(phase))
                 py_env.cache['phase']=phase
                 eval_py_env.cache['phase']=phase
             np.savez(save_dir+'/return_loss_log.npz', losses=np.asarray(losses), returns=np.asarray(returns),
