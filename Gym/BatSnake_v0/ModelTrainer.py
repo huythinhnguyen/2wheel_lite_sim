@@ -49,7 +49,7 @@ DISCOUNT_FACTOR = 0.999
 TD_ERROR_LOSS_FUNCTION = common.element_wise_squared_loss
 TRAIN_STEP_COUNTER = 0
 
-DATE = '09.14.22'
+DATE = '09.15.22'
 NOTES =''
 CHECKPOINT_DIRECTORY = ''
 
@@ -176,7 +176,7 @@ def train_v1(init_policy=None):
             losses.append(train_loss)
         if step % EVAL_STEPS_INTERVAL == 0:
             # save policy:
-            tf_policy_saver.save(policy_dir+str(int(step/1e3))+'K_steps')
+            if step%1e6==0: tf_policy_saver.save( os.path.join(policy_dir,str(int(step/1e6))+'M_steps'))
             print('--- Evaluation ---')
             eval_py_env.episode = 0
             average_return = compute_average_return(eval_tf_env, eval_policy, NUMBER_OF_EVAL_EPISODES, getcache=False)
@@ -202,11 +202,11 @@ def train_v1(init_policy=None):
     from matplotlib import pyplot as plt
 
     fig, ax = plt.subplots(2,1)
-    ax[0].plot(returns)
+    ax[0].plot(training_steps,returns)
     ax[0].set_ylabel('average episode return')
     ax[0].set_xlabel('training steps')
     ax[1].plot(losses)
-    ax[1].set_ylabel('loss')
+    ax[1].set_ylabel(np.linspace(np.min(training_steps), np.max(training_steps), len(losses) ),'loss')
     ax[1].set_xlabel('training steps')
     plt.show()
 
