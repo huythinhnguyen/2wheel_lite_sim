@@ -51,7 +51,7 @@ TRAIN_STEP_COUNTER = 0
 
 DATE = '09.15.22'
 NOTES =''
-CHECKPOINT_DIRECTORY = 'Gym/BatSnake_v0/TrainAgents'
+CHECKPOINT_DIRECTORY = 'Gym/BatSnake_v0/TrainedAgents'
 TIME_LIMIT = 250
 
 ### Build some Function building model here!
