@@ -41,6 +41,7 @@ LEARNING_RATE = 3e-4
 LOG_STEPS_INTERVAL = 20_000
 NUMBER_OF_EVAL_EPISODES = 10
 EVAL_STEPS_INTERVAL = 20_000
+POLICY_SAVER_INTERVAL = 500_000
 
 STARTING_EPSILON = 0.8
 EPSILON_DECAY_COUNT = 2_000_000
@@ -178,7 +179,7 @@ def train_v1(init_policy=None):
             losses.append(train_loss)
         if step % EVAL_STEPS_INTERVAL == 0:
             # save policy:
-            if step%1e6==0: tf_policy_saver.save( os.path.join(policy_dir,str(int(step/1e6))+'M_steps'))
+            if step%POLICY_SAVER_INTERVAL==0: tf_policy_saver.save( os.path.join(policy_dir,str(int(step/1e6))+'M_steps'))
             print('--- Evaluation ---')
             eval_py_env.episode = 0
             average_return = compute_average_return(eval_tf_env, eval_policy, NUMBER_OF_EVAL_EPISODES, getcache=False)
