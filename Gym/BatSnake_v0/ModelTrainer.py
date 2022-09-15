@@ -163,6 +163,7 @@ def train_v1(init_policy=None):
     else: save_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), CHECKPOINT_DIRECTORY+'/'+DATE+NOTES)
     print('Policy will be save to:\n', save_dir)
     policy_dir = os.path.join(save_dir, 'policy')
+    if not os.path.exists(policy_dir): os.mkdir(policy_dir)
     tf_policy_saver = policy_saver.PolicySaver(eval_policy)
     
 
