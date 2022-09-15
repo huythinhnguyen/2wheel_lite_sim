@@ -188,7 +188,7 @@ def train_v1(init_policy=None):
                 eval_py_env.cache['phase']=phase
             np.savez(save_dir+'/return_loss_log.npz', losses=np.asarray(losses), returns=np.asarray(returns),
                     episodes=np.asarray(training_episodes), steps=np.asarray(training_steps), phases=np.asarray(phases))
-            np.savez(save_dir+'/training_log.npz', episodes=np.asarray(py_env.records['episode']), step=np.asarray(py_env.records['step']),
+            np.savez(save_dir+'/training_log.npz', episode=np.asarray(py_env.records['episode']), steps=np.asarray(py_env.records['steps']),
                     hit=np.asarray(py_env.records['hit']), success=np.asarray(py_env.records['success']), 
                     timeout=np.asarray(py_env.records['timeout']), outbound=np.asarray(py_env.records['outbound']))
 
