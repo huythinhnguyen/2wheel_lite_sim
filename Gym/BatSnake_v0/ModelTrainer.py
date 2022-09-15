@@ -51,7 +51,7 @@ TRAIN_STEP_COUNTER = 0
 
 DATE = '09.15.22'
 NOTES =''
-CHECKPOINT_DIRECTORY = ''
+CHECKPOINT_DIRECTORY = 'Gym/BatSnake_v0/TrainAgents'
 
 ### Build some Function building model here!
 ### Build some convenience saver if needed. :D
