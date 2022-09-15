@@ -5,6 +5,7 @@ import pathlib
 if pathlib.Path(os.path.abspath(__file__)).parents[2] not in sys.path:
     sys.path.append(str(pathlib.Path(os.path.abspath(__file__)).parents[2]))
 
+import time
 
 from Gym.BatSnake_v0.Environment import DiscreteAction
 
@@ -151,6 +152,8 @@ def train_v1(init_policy=None):
     training_episodes = []
     training_steps = []
     phases = []
+    tic = time.time()
+    times = []
 
     print('Current Dir:', os.getcwd())
     if CHECKPOINT_DIRECTORY=='':
@@ -177,17 +180,19 @@ def train_v1(init_policy=None):
             print('--- Evaluation ---')
             eval_py_env.episode = 0
             average_return = compute_average_return(eval_tf_env, eval_policy, NUMBER_OF_EVAL_EPISODES, getcache=False)
-            print('step={0}: return={1}'.format(step, average_return))
+            time_elapse = np.round(time.time() - tic)
+            print('step={0}: return={1}. Time elapse: {2}h{3}m'.format(step, average_return, np.floor(time_elapse/3600), np.round(time_elapse%3600/60)))
             returns.append(average_return)
             training_episodes.append(py_env.episode)
             training_steps.append(step)
             phases.append(phase)
+            times.append(time_elapse)
             if np.mean(returns[-5:])>0.9 and phase<3:
                 phase += 0
                 py_env.cache['phase']=phase
                 eval_py_env.cache['phase']=phase
             np.savez(save_dir+'/return_loss_log.npz', losses=np.asarray(losses), returns=np.asarray(returns),
-                    episodes=np.asarray(training_episodes), steps=np.asarray(training_steps), phases=np.asarray(phases))
+                    episodes=np.asarray(training_episodes), steps=np.asarray(training_steps), phases=np.asarray(phases), times=np.asarray(times))
             np.savez(save_dir+'/training_log.npz', episode=np.asarray(py_env.records['episode']), steps=np.asarray(py_env.records['steps']),
                     hit=np.asarray(py_env.records['hit']), success=np.asarray(py_env.records['success']), 
                     timeout=np.asarray(py_env.records['timeout']), outbound=np.asarray(py_env.records['outbound']))
