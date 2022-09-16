@@ -28,7 +28,12 @@ def reward_function(**kwargs):
     if 'hit' in kwargs.keys():
         hit = kwargs['hit']
         if hit == 'plant': return -1
-        if hit == 'pole': return +1
+        if hit == 'pole': 
+            if 'food_polar' in kwargs.keys():
+                food_polar = kwargs['food_polar'].reshape(-1,)[:2]
+                if np.abs(food_polar[1]) < np.pi/6: return 1
+                elif np.abs(food_polar[1]) < np.pi/2: return 0.2
+                else: return 0
     else: return 0
 
 
