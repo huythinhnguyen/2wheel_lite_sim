@@ -62,7 +62,8 @@ class DiscreteAction(py_environment.PyEnvironment):
             self._episode_ended = True
             if self.log: self.status='hit'
         elif help.collision_check(self.sensor.cache['inview'], 'pole'):
-            reward += help.reward_function(hit='pole')
+            food_polar = help.get_closest_from_inview(self.sensor.cache['inview'], 'pole')
+            reward += help.reward_function(hit='pole', food_polar=food_polar)
             self.level += 1
         # Move according to action
         v, omega = self.controller.get_kinematic(self.echoes, approach_factor=action)
