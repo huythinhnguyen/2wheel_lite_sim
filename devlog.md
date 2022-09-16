@@ -1,3 +1,6 @@
+### 09/16/22:
+- Archived Stable Branch to Affable Amy
+
 ### 09/11/22:
 - Need to build the Trainer. Run a sample Traning on a simplified phase 1 mode to see if it works!
 - Spend some time to think of the IID tracking
