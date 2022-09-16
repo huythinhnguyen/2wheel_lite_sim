@@ -1,3 +1,4 @@
+from ast import arg
 import numpy as np
 import os
 import sys
@@ -22,6 +23,12 @@ def collision_check(inview, mode):
         return True
     else:
         return False
+
+
+def get_closest_from_inview(inview, mode):
+    inview_of_klass = inview[inview[:,2]==sensorconfig.OBJECTS_DICT[mode]][:,:2] 
+    argmin = np.argmin(inview_of_klass[:,0])
+    return inview_of_klass[argmin].reshape(-1,)
 
 
 def reward_function(**kwargs):
