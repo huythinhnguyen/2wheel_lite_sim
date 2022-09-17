@@ -55,6 +55,8 @@ NOTES =''
 CHECKPOINT_DIRECTORY = 'TrainedAgents'
 TIME_LIMIT = 250
 
+INIT_POLICY = None # Placed Previously Trained Policy Here.
+
 ### Build some Function building model here!
 ### Build some convenience saver if needed. :D
 ### ADD Setting if needed
@@ -217,4 +219,4 @@ def train_v1(init_policy=None):
     return None
 
 if __name__=='__main__':
-    train_v1()
+    train_v1(init_policy=INIT_POLICY)
