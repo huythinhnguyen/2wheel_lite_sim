@@ -1,3 +1,6 @@
+### 09/18/22:
+- Now need to add the previously trained policy into INIT POLICY
+
 ### 09/16/22:
 - Archived Stable Branch to Affable Amy
 
