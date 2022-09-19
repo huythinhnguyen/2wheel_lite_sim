@@ -210,7 +210,7 @@ def train_v1(init_policy=None):
             np.savez(save_dir+'/return_loss_log.npz', losses=np.asarray(losses), returns=np.asarray(returns),
                     episodes=np.asarray(training_episodes), steps=np.asarray(training_steps), phases=np.asarray(phases), times=np.asarray(times))
             np.savez(save_dir+'/training_log.npz', episode=np.asarray(py_env.records['episode']), steps=np.asarray(py_env.records['steps']),
-                    hit=np.asarray(py_env.records['hit']), success=np.asarray(py_env.records['success']), 
+                    hit=np.asarray(py_env.records['hit']), success=np.asarray(py_env.records['success']), hitfood=np.asarray(py_env.records['hitfood']),
                     timeout=np.asarray(py_env.records['timeout']), outbound=np.asarray(py_env.records['outbound']))
 
 
