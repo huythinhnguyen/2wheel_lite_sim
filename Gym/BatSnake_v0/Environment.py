@@ -79,7 +79,7 @@ class DiscreteAction(py_environment.PyEnvironment):
         self.step_count += 1
         if self.step_count >= self.cache['time_limit'] or self.level >= self.cache['max_level']:
             self._episode_ended = True
-            if self.log: self.status = 'success' if reward>0 else 'timeout'
+            if self.log: self.status = 'success' if reward>=1 else 'hitfood' if reward>0 else 'timeout'
         if self._episode_ended:
             return ts.termination(self._state, reward=reward)
         else:
@@ -99,6 +99,8 @@ class DiscreteAction(py_environment.PyEnvironment):
                 else: self.records['hit'].append(1 if self.status=='hit' else 0)
                 if 'success' not in self.records.keys(): self.records['success'] = [1] if self.status=='success' else [0]
                 else: self.records['success'].append(1 if self.status=='success' else 0)
+                if 'hitfood' not in self.records.keys(): self.records['hitfood'] = [1] if self.status=='hitfood' else [0]
+                else: self.records['hitfood'].append(1 if self.status=='hitfood' else 0)
                 if 'timeout' not in self.records.keys(): self.records['timeout'] = [1] if self.status=='timeout' else [0]
                 else: self.records['timeout'].append(1 if self.status=='timeout' else 0)
                 if 'outbound' not in self.records.keys(): self.records['outbound'] = [1] if self.status=='outbound' else [0]
