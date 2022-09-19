@@ -10,6 +10,8 @@ if pathlib.Path(os.path.abspath(__file__)).parents[2] not in sys.path:
 from Sensors.BatEcho import Setting as sensorconfig
 from Arena import Builder
 
+from tensorflow import saved_model
+
 HIT_DISTANCE = {'pole': 0.3, 'plant': 0.4}
 OBJECT_SPACING = {'pole': 0.1, 'plant': 0.3}
 MAZE_SIZE = 16.
@@ -42,6 +44,11 @@ def reward_function(**kwargs):
                 elif np.abs(food_polar[1]) < np.pi/2: return 0.2
                 else: return 0
     else: return 0
+
+
+def load_policy(checkpoint_dir, agent_id, parent_dir=os.path.dirname(os.path.abspath(__file__))):
+    path = os.path.join(parent_dir, checkpoint_dir, agent_id)
+    return saved_model.load(path)
 
 
 def maze_builder(mode, maze_size=MAZE_SIZE, tunnel_width=TUNNEL_WIDTH):
