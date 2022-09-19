@@ -125,8 +125,8 @@ def spawn_bat(mode, phase, maze_size=MAZE_SIZE, tunnel_width=TUNNEL_WIDTH, jitte
 def out_of_bound(pose, mode, maze_size=MAZE_SIZE, tunnel_width=TUNNEL_WIDTH):
     x, y = pose[:2]
     if mode=='box':
-        if x<0 and y>(maze_size/2-tunnel_width): return 1
-        elif x<-(maze_size/2-tunnel_width) and y>-maze_size/2: return -1
+        if (x<0 and x>-(maze_size/2-tunnel_width)) and y>(maze_size/2-tunnel_width): return 1
+        elif x<-(maze_size/2-tunnel_width) and (y>-(maze_size/2-tunnel_width) and y<0.) : return -1
         else: return 0
     if mode=='donut':
         rho, phi = Builder.cart2pol(x,y)
