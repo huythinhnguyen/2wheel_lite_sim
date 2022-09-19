@@ -3,7 +3,6 @@ import os
 import sys
 import pathlib
 
-from . import Helper as help
 if pathlib.Path(os.path.abspath(__file__)).parents[2] not in sys.path:
     sys.path.append(str(pathlib.Path(os.path.abspath(__file__)).parents[2]))
 
