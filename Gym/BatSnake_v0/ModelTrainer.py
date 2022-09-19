@@ -121,7 +121,7 @@ def compute_average_return(environment, policy, number_of_episodes, getcache=Fal
 
 def train_v1(init_policy=None):
     phase = 0
-    py_env = DiscreteAction(time_limit = TIME_LIMIT, difficulty=0 phase=phase, log=True)
+    py_env = DiscreteAction(time_limit = TIME_LIMIT, difficulty=0, phase=phase, log=True)
     tf_env = tf_py_environment.TFPyEnvironment(py_env)
     #action_tensor_spec = tensor_spec.from_spec(py_env.action_spec())
     num_actions = 2 #action_tensor_spec.maximum - action_tensor_spec.minimum + 1
