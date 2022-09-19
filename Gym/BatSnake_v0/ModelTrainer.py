@@ -38,9 +38,9 @@ REPLAY_BUFFER_MAX_LENGTH = 500_000
 PARALLEL_CALLS = 32
 BATCH_SIZE = 1024
 LEARNING_RATE = 3e-4
-LOG_STEPS_INTERVAL = 20_0
+LOG_STEPS_INTERVAL = 500_0
 NUMBER_OF_EVAL_EPISODES = 10
-EVAL_STEPS_INTERVAL = 20_0
+EVAL_STEPS_INTERVAL = 500_0
 POLICY_SAVER_INTERVAL = 500_0
 
 STARTING_EPSILON = 0.8
@@ -121,13 +121,13 @@ def compute_average_return(environment, policy, number_of_episodes, getcache=Fal
 
 def train_v1(init_policy=None):
     phase = 0
-    py_env = DiscreteAction(time_limit = TIME_LIMIT, difficulty=DIFFICULTY, phase=phase, log=True)
+    py_env = DiscreteAction(time_limit = TIME_LIMIT, difficulty=0 phase=phase, log=True)
     tf_env = tf_py_environment.TFPyEnvironment(py_env)
     #action_tensor_spec = tensor_spec.from_spec(py_env.action_spec())
     num_actions = 2 #action_tensor_spec.maximum - action_tensor_spec.minimum + 1
     q_net = q_network(hidden_layer_params=HIDDEN_LAYER_PARAMS, number_of_actions=num_actions)
     
-    eval_py_env = DiscreteAction(time_limit = TIME_LIMIT, difficulty=DIFFICULTY, phase=phase, log=True)
+    eval_py_env = DiscreteAction(time_limit = TIME_LIMIT, difficulty=0, phase=phase, log=True)
     eval_tf_env = tf_py_environment.TFPyEnvironment(eval_py_env)
 
     agent = summon_agent(tf_env, q_net)
@@ -171,13 +171,6 @@ def train_v1(init_policy=None):
 
     if not os.path.exists(checkpoint_dir): os.makedirs(checkpoint_dir)
     if not os.path.exists(policy_dir): os.makedirs(policy_dir)
-    train_checkpointer = common.Checkpointer(ckpt_dir=checkpoint_dir,
-                                             max_to_keep=10,
-                                             agent=agent,
-                                             policy=agent.policy,
-                                             replay_buffer=replay_buffer,
-                                             global_step=agent.train_step_counter)
-                                             
     tf_policy_saver = policy_saver.PolicySaver(eval_policy)
     
 
@@ -194,7 +187,7 @@ def train_v1(init_policy=None):
             # save policy:
             if step%POLICY_SAVER_INTERVAL==0:
                 tf_policy_saver.save( os.path.join(policy_dir,str(int(step/1e6))+'M_steps'))
-                train_checkpointer.save(global_step=agent.train_step_counter)
+                tf_policy_saver.save_checkpoint(checkpoint_dir)
             print('--- Evaluation ---')
             eval_py_env.episode = 0
             average_return = compute_average_return(eval_tf_env, eval_policy, NUMBER_OF_EVAL_EPISODES, getcache=False)
@@ -205,11 +198,15 @@ def train_v1(init_policy=None):
             training_steps.append(step)
             phases.append(phase)
             times.append(time_elapse)
-            if np.mean(returns[-10:])>0.8 and phase<3:
+            if np.mean(returns[-10:])>0.85 and phase<3:
                 phase += 0
                 print('TRAINING IN PHASE {0}'.format(phase))
                 py_env.cache['phase']=phase
                 eval_py_env.cache['phase']=phase
+            elif np.mean(returns[-10:])>0.85 and phase==3:
+                print('TRAINING IN PHASE {0}, DIFFICULTY {1}.'.format(phase, DIFFICULTY))
+                py_env.cache['difficulty']=DIFFICULTY
+                eval_py_env.cache['difficulty']=DIFFICULTY
             np.savez(save_dir+'/return_loss_log.npz', losses=np.asarray(losses), returns=np.asarray(returns),
                     episodes=np.asarray(training_episodes), steps=np.asarray(training_steps), phases=np.asarray(phases), times=np.asarray(times))
             np.savez(save_dir+'/training_log.npz', episode=np.asarray(py_env.records['episode']), steps=np.asarray(py_env.records['steps']),
@@ -229,6 +226,8 @@ def train_v1(init_policy=None):
     plt.show()
 
     return None
+
+
 
 if __name__=='__main__':
     train_v1(init_policy=INIT_POLICY)
