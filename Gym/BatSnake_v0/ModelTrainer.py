@@ -122,13 +122,13 @@ def compute_average_return(environment, policy, number_of_episodes, getcache=Fal
 
 def train_v1(init_policy=None):
     phase = 0
-    py_env = DiscreteAction(time_limit = TIME_LIMIT, difficulty=DIFFICULTY phase=phase, log=True)
+    py_env = DiscreteAction(time_limit = TIME_LIMIT, difficulty=DIFFICULTY, phase=phase, log=True)
     tf_env = tf_py_environment.TFPyEnvironment(py_env)
     #action_tensor_spec = tensor_spec.from_spec(py_env.action_spec())
     num_actions = 2 #action_tensor_spec.maximum - action_tensor_spec.minimum + 1
     q_net = q_network(hidden_layer_params=HIDDEN_LAYER_PARAMS, number_of_actions=num_actions)
     
-    eval_py_env = DiscreteAction(time_limit = TIME_LIMIT, difficulty=DIFFICULTY phase=phase, log=True)
+    eval_py_env = DiscreteAction(time_limit = TIME_LIMIT, difficulty=DIFFICULTY, phase=phase, log=True)
     eval_tf_env = tf_py_environment.TFPyEnvironment(eval_py_env)
 
     agent = summon_agent(tf_env, q_net)
@@ -175,7 +175,7 @@ def train_v1(init_policy=None):
     train_checkpointer = common.Checkpointer(ckpt_dir=checkpoint_dir,
                                              max_to_keep=10,
                                              agent=agent,
-                                             policy=agent.policy
+                                             policy=agent.policy,
                                              replay_buffer=replay_buffer,
                                              global_step=agent.train_step_counter)
                                              
