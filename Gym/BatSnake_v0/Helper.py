@@ -42,7 +42,7 @@ def reward_function(**kwargs):
         if hit == 'pole': 
             if 'food_polar' in kwargs.keys():
                 food_polar = kwargs['food_polar'].reshape(-1,)[:2]
-                print(food_polar)
+                #print(food_polar)
                 if np.abs(food_polar[1]) < 30:
                     return 1
                 elif np.abs(food_polar[1]) < 90:
