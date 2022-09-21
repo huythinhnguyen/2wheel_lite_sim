@@ -1,5 +1,9 @@
+### 09/21/22:
+- Train a new round. Move epsilon decay length to 4M and train up to 5M steps. Level up when >0.75. 
+
 ### 09/19/22:
 - Need to write some helper code to initiate the Q-Network with previously trained weights.
+--> Training on 09/22: Agent could not pass phase 0 difficulty zero. --> Took 27h
 
 ### 09/18/22:
 - Now need to add the previously trained policy into INIT POLICY
