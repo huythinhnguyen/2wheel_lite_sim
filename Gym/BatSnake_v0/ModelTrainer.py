@@ -29,12 +29,12 @@ from tensorflow.keras.activations import relu, linear
 
 HIDDEN_LAYER_PARAMS = (128, 128, 128, 64)
 
-TRAINING_STEPS = 5_000_000
+TRAINING_STEPS = 3_000_000
 INITIAL_COLLECTION_STEPS = 5_000
 COLLECT_STEPS_PER_ITERATION = 1
 REPLAY_BUFFER_MAX_LENGTH = 1_000_000
 
-PARALLEL_CALLS = 64
+PARALLEL_CALLS = 32
 BATCH_SIZE = 1024
 LEARNING_RATE = 3e-4
 LOG_STEPS_INTERVAL = 20_000
@@ -42,14 +42,14 @@ NUMBER_OF_EVAL_EPISODES = 10
 EVAL_STEPS_INTERVAL = 20_000
 POLICY_SAVER_INTERVAL = 500_000
 
-STARTING_EPSILON = 0.9
-EPSILON_DECAY_COUNT = 4_000_000
-ENDING_EPSILON = 0.1
+STARTING_EPSILON = 0.8
+EPSILON_DECAY_COUNT = 1_500_000
+ENDING_EPSILON = 0.05
 DISCOUNT_FACTOR = 0.999
 TD_ERROR_LOSS_FUNCTION = common.element_wise_squared_loss
 TRAIN_STEP_COUNTER = 0
 
-DATE = '09.21.22'
+DATE = '09.23.22'
 NOTES =''
 CHECKPOINT_DIRECTORY = 'TrainedAgents'
 TIME_LIMIT = 500
@@ -191,18 +191,19 @@ def train_v1(init_policy=None):
             eval_py_env.episode = 0
             average_return = compute_average_return(eval_tf_env, eval_policy, NUMBER_OF_EVAL_EPISODES, getcache=False)
             time_elapse = np.round(time.time() - tic)
-            print('step={0}: return={1}. Time elapse: {2}h{3}m'.format(step, average_return, int(np.floor(time_elapse/3600)), int(np.round(time_elapse%3600/60))))
+            print('step={0}: return={1}. phase={2} Time elapse: {3}h{4}m'.format(step, average_return, py_env.cache['phase'],
+            int(np.floor(time_elapse/3600)), int(np.round(time_elapse%3600/60))))
             returns.append(average_return)
             training_episodes.append(py_env.episode)
             training_steps.append(step)
             phases.append(phase)
             times.append(time_elapse)
-            if np.mean(returns[-5:])>0.75 and phase<3:
+            if np.mean(returns[-3:])>0.7 and py_env.cache['phase']<3:
                 phase += 0
                 print('TRAINING IN PHASE {0}'.format(phase))
                 py_env.cache['phase']=phase
                 eval_py_env.cache['phase']=phase
-            elif np.mean(returns[-5:])>0.75 and phase==3:
+            elif np.mean(returns[-3:])>0.7 and py_env.cache['phase']<3:
                 print('TRAINING IN PHASE {0}, DIFFICULTY {1}.'.format(phase, DIFFICULTY))
                 py_env.cache['difficulty']=DIFFICULTY
                 eval_py_env.cache['difficulty']=DIFFICULTY
