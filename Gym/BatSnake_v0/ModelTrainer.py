@@ -43,7 +43,7 @@ EVAL_STEPS_INTERVAL = 20_000
 POLICY_SAVER_INTERVAL = 500_000
 
 STARTING_EPSILON = 0.8
-EPSILON_DECAY_COUNT = 1_500_000
+EPSILON_DECAY_COUNT = 2_000_000
 ENDING_EPSILON = 0.05
 DISCOUNT_FACTOR = 0.999
 TD_ERROR_LOSS_FUNCTION = common.element_wise_squared_loss
@@ -56,6 +56,9 @@ TIME_LIMIT = 500
 DIFFICULTY = 1
 
 INIT_POLICY = None # help.load_policy(checkpoint_dir=CHECKPOINT_DIRECTORY, agent_id='09.15.22') # Placed Previously Trained Policy Here.
+
+LEVEL_UP_THRESHOLD = 0.7
+MOVING_AVG_POINTS = 3
 
 ### Build some Function building model here!
 ### Build some convenience saver if needed. :D
@@ -198,12 +201,12 @@ def train_v1(init_policy=None):
             training_steps.append(step)
             phases.append(phase)
             times.append(time_elapse)
-            if np.mean(returns[-3:])>0.7 and py_env.cache['phase']<3:
-                phase += 0
+            if np.mean(returns[-MOVING_AVG_POINTS:])>LEVEL_UP_THRESHOLD and py_env.cache['phase']<3:
+                phase += 1
                 print('TRAINING IN PHASE {0}'.format(phase))
                 py_env.cache['phase']=phase
                 eval_py_env.cache['phase']=phase
-            elif np.mean(returns[-3:])>0.7 and py_env.cache['phase']<3:
+            elif np.mean(returns[-MOVING_AVG_POINTS:])>LEVEL_UP_THRESHOLD and py_env.cache['phase']<3:
                 print('TRAINING IN PHASE {0}, DIFFICULTY {1}.'.format(phase, DIFFICULTY))
                 py_env.cache['difficulty']=DIFFICULTY
                 eval_py_env.cache['difficulty']=DIFFICULTY
