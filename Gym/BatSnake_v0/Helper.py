@@ -1,9 +1,7 @@
-from ast import arg
 import numpy as np
 import os
 import sys
 import pathlib
-import shutil
 
 
 if pathlib.Path(os.path.abspath(__file__)).parents[2] not in sys.path:
