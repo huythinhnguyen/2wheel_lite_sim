@@ -29,7 +29,7 @@ from tensorflow.keras.activations import relu, linear
 
 HIDDEN_LAYER_PARAMS = (128, 128, 128, 64)
 
-TRAINING_STEPS = 4_000_000
+TRAINING_STEPS = 3_000_000
 INITIAL_COLLECTION_STEPS = 1_000
 COLLECT_STEPS_PER_ITERATION = 1
 REPLAY_BUFFER_MAX_LENGTH = 1_000_000
@@ -46,10 +46,10 @@ STARTING_EPSILON = 0.8
 EPSILON_DECAY_COUNT = 2_000_000
 ENDING_EPSILON = 0.1
 DISCOUNT_FACTOR = 0.999
-TD_ERROR_LOSS_FUNCTION = common.element_wise_squared_loss
+TD_ERROR_LOSS_FUNCTION = common.element_wise_huber_loss
 TRAIN_STEP_COUNTER = 0
-
-DATE = '09.25.22'
+# Try Huber_loss this time
+DATE = '10.04.22'
 NOTES =''
 CHECKPOINT_DIRECTORY = 'TrainedAgents'
 TIME_LIMIT = 500
@@ -57,8 +57,8 @@ DIFFICULTY = 1
 
 INIT_POLICY = None # help.load_policy(checkpoint_dir=CHECKPOINT_DIRECTORY, agent_id='09.15.22') # Placed Previously Trained Policy Here.
 
-LEVEL_UP_THRESHOLD = 0.75
-MOVING_AVG_POINTS = 3
+LEVEL_UP_THRESHOLD = 0.8
+MOVING_AVG_POINTS = 5
 
 ### Build some Function building model here!
 ### Build some convenience saver if needed. :D
