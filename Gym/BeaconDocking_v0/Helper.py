@@ -23,9 +23,3 @@ def beacon2objects(x, y, theta, d, mode='bull', bull_angle=np.pi/3):
                             [x + d*np.cos(theta-bull_angle/2), y + d*np.sin(theta-bull_angle/2), 1]], 
                             dtype=np.float32).reshape(2,3)
     return np.vstack((objects, horn))
-
-
-def beacons2objects(beacon_objects, beacon_klass=BEACON_KLASS):
-    theta = 0. # ??? NOTE: Need to fixed this!
-    x, y = beacon2objects[beacon2objects[:,2]==beacon_klass][:2]
-    return beacon2objects(x,y,theta, d='bull', bull_angle=BEACON_HORN_ANGLE)
