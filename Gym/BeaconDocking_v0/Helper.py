@@ -53,6 +53,7 @@ def beacons_mode(objects: np.ndarray):
 def isolate_beacon_objs_from_objects(objects: np.ndarray, number_of_beacons=None):
     if number_of_beacons is None:
         number_of_beacons = beacons_count(objects)
+    if number_of_beacons==0: return np.asarray([]).reshape(0,3)
     mode = beacons_mode(objects)
     beacon_objs = np.asarray([], dtype=np.float32).reshape(0,3)
     t = 3 if mode=='bull' else 2
@@ -61,5 +62,19 @@ def isolate_beacon_objs_from_objects(objects: np.ndarray, number_of_beacons=None
     return beacon_objs
 
 
-def objects2beacons(beacon_objs: np.ndarray, objects: np.ndarray):
+def object2beacon(beacon_obj: np.ndarray):
+    N = len(beacon_obj)
+    mode = 'bull' if N==3 else 'unicorn' if N==2 else None
+    x, y = beacon_obj[0][:2]
+    if mode=='unicorn':
+        xh, yh = beacon_obj[1][:2]
+    elif mode=='bull':
+        xh = (beacon_obj[1][0] + beacon_obj[2][0])/2
+        yh = (beacon_obj[1][1] + beacon_obj[2][1])/2
+    theta = np.arctan2(yh-y, xh-x)
+    return x, y, theta
+
+
+def objects2beacons(beacon_objs: np.ndarray, mode: str):
+    
     return None
