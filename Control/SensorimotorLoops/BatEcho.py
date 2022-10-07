@@ -255,7 +255,7 @@ class AvoidApproach(Avoid):
         if approach_factor is not None: self.approach_factor = approach_factor
         cues = self.get_cues(input_echoes)
         v = self._get_linear_velocity(cues)
-        omega = self._get_angular_velocity(cues)
+        omega = self._get_angular_velocity(cues, v=v)
         self.kine_cache.update({'v': v, 'omega': omega})
         return v, omega
 
