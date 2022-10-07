@@ -142,25 +142,23 @@ def box_builder(mode, maze_size=MAZE_SIZE):
     return np.hstack((maze, sensorconfig.OBJECTS_DICT['plant']*np.ones((len(maze),1))))
 
 
-def initializer(number_of_positions=4): # INIT 9 or 4 EVENLY SPACED POSITION WITH JITTER
-    positions = np.empty((number_of_positions, 3))
-    if number_of_positions==9:
-        d = MAZE_SIZE/3
-        locs = [-d, 0, d]
-        for i, pos in enumerate(positions):
-            pos[0] = locs[int(i%3)]
-            pos[1]= locs[int(i/3)]
-            pos[2] = np.random.uniform(low=-np.pi, high=np.pi)
-    elif number_of_positions==4:
-        d = MAZE_SIZE/4
-        locs = [-d, d]
-        for i, pos in enumerate(positions):
-            pos[0] = locs[int(i%2)]
-            pos[1]= locs[int(i/2)]
-            pos[2] = np.random.uniform(low=-np.pi, high=np.pi)
-    bat_selector = np.random.randint(low=0, high=number_of_positions+1)
-    bat_pose = positions[bat_selector].reshape(3,)
-    beacons = np.delete(positions, obj=bat_selector, axis=0)
+def initializer(number_of_positions=9, number_of_poses=4, jit=0): # INIT 9 or 4 EVENLY SPACED POSITION WITH JITTER
+    beacons = np.empty((number_of_positions, 3))
+    poses = np.empty((number_of_poses, 3))
+    d = MAZE_SIZE/(3.5)
+    locs = [-d, 0, d]
+    for i, pos in enumerate(beacons):
+        pos[0] = locs[int(i%3)] + np.random.uniform(low=-1, high=1)*JITTER['xy']*jit
+        pos[1]= locs[int(i/3)] + np.random.uniform(low=-1, high=1)*JITTER['xy']*jit
+        pos[2] = np.random.uniform(low=-np.pi, high=np.pi)
+    d = MAZE_SIZE/7
+    locs = [-d, d]
+    for i, pos in enumerate(poses):
+        pos[0] = locs[int(i%2)] + np.random.uniform(low=-1, high=1)*JITTER['xy']*jit
+        pos[1]= locs[int(i/2)] + np.random.uniform(low=-1, high=1)*JITTER['xy']*jit
+        pos[2] = np.random.uniform(low=-np.pi, high=np.pi)
+    bat_selector = np.random.randint(low=0, high=number_of_poses+1)
+    bat_pose = poses[bat_selector].reshape(3,)
     return bat_pose, beacons
 
 
