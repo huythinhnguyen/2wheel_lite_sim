@@ -2,6 +2,7 @@ import numpy as np
 import sys
 import os
 import pathlib
+from Gym.BatSnake_v0.Helper import MAZE_SIZE
 
 if pathlib.Path(os.path.abspath(__file__)).parents[2] not in sys.path:
     sys.path.append(str(pathlib.Path(os.path.abspath(__file__)).parents[2]))
@@ -114,5 +115,52 @@ def docking_check_with_beacons(pose, beacons):
     if (np.abs(docking_angle)>BEACON_SPECS['hit_angle']/2): return False, cache
     cache['docking_angle'] = docking_angle
     return True, cache
+
+
+def collision_check(inview, mode):
+    inview_of_klass = inview[inview[:,2]==sensorconfig.OBJECTS_DICT[mode]][:,:2]
+    if np.sum(inview_of_klass[:,0]<HIT_DISTANCE[mode]) > 0:
+        return True
+    else:
+        return False
+
+
+def box_builder(mode, maze_size=MAZE_SIZE):
+    starts, ends = [],[] 
+    starts.append([-maze_size/2, -maze_size/2])
+    ends.append([maze_size/2, -maze_size/2])
+    starts.append([maze_size/2, -maze_size/2])
+    ends.append([maze_size/2, maze_size/2])
+    starts.append([maze_size/2, maze_size/2])
+    ends.append([-maze_size/2, maze_size/2])
+    starts.append([-maze_size/2, maze_size/2])
+    ends.append([-maze_size/2, -maze_size/2])
+    #
+    spacings = OBJECT_SPACING['plant']*np.ones(8)
+    maze = Builder.build_walls(starts, ends, spacings)
+
+    return np.hstack((maze, sensorconfig.OBJECTS_DICT['plant']*np.ones((len(maze),1))))
+
+
+def initializer(number_of_positions=4): # INIT 9 or 4 EVENLY SPACED POSITION WITH JITTER
+    positions = np.empty((number_of_positions, 3))
+    if number_of_positions==9:
+        d = MAZE_SIZE/3
+        locs = [-d, 0, d]
+        for i, pos in enumerate(positions):
+            pos[0] = locs[int(i%3)]
+            pos[1]= locs[int(i/3)]
+            pos[2] = np.random.uniform(low=-np.pi, high=np.pi)
+    elif number_of_positions==4:
+        d = MAZE_SIZE/4
+        locs = [-d, d]
+        for i, pos in enumerate(positions):
+            pos[0] = locs[int(i%2)]
+            pos[1]= locs[int(i/2)]
+            pos[2] = np.random.uniform(low=-np.pi, high=np.pi)
+    bat_selector = np.random.randint(low=0, high=number_of_positions+1)
+    bat_pose = positions[bat_selector].reshape(3,)
+    beacons = np.delete(positions, obj=bat_selector, axis=0)
+    return bat_pose, beacons
 
 
