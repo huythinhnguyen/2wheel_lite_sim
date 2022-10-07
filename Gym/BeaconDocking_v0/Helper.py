@@ -157,7 +157,7 @@ def initializer(number_of_positions=9, number_of_poses=4, jit=0): # INIT 9 or 4 
         pos[0] = locs[int(i%2)] + np.random.uniform(low=-1, high=1)*JITTER['xy']*jit
         pos[1]= locs[int(i/2)] + np.random.uniform(low=-1, high=1)*JITTER['xy']*jit
         pos[2] = np.random.uniform(low=-np.pi, high=np.pi)
-    bat_selector = np.random.randint(low=0, high=number_of_poses+1)
+    bat_selector = np.random.randint(low=0, high=number_of_poses)
     bat_pose = poses[bat_selector].reshape(3,)
     return bat_pose, beacons
 
