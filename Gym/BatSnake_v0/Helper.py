@@ -42,6 +42,8 @@ def reward_function(**kwargs):
                 food_polar = kwargs['food_polar'].reshape(-1,)[:2]
                 #print(food_polar)
                 if np.abs(food_polar[1]) < 30:
+                    return 2
+                elif np.abs(food_polar[1])<45:
                     return 1
                 elif np.abs(food_polar[1]) < 90:
                     return 0.2

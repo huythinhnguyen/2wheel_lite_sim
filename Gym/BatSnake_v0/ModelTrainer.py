@@ -57,7 +57,7 @@ DIFFICULTY = 1
 
 INIT_POLICY = None # help.load_policy(checkpoint_dir=CHECKPOINT_DIRECTORY, agent_id='09.15.22') # Placed Previously Trained Policy Here.
 
-LEVEL_UP_THRESHOLD = 0.8
+LEVEL_UP_THRESHOLD = 1.
 MOVING_AVG_POINTS = 5
 
 ### Build some Function building model here!
