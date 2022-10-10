@@ -29,7 +29,7 @@ from tensorflow.keras.activations import relu, linear
 
 HIDDEN_LAYER_PARAMS = (128, 128, 128, 64)
 
-TRAINING_STEPS = 4_000_000
+TRAINING_STEPS = 3_000_000
 INITIAL_COLLECTION_STEPS = 1_000
 COLLECT_STEPS_PER_ITERATION = 1
 REPLAY_BUFFER_MAX_LENGTH = 1_000_000
@@ -42,18 +42,18 @@ NUMBER_OF_EVAL_EPISODES = 10
 EVAL_STEPS_INTERVAL = 20_000
 POLICY_SAVER_INTERVAL = 500_000
 
-STARTING_EPSILON = 0.8
-EPSILON_DECAY_COUNT = 4_000_000
+STARTING_EPSILON = 0.9
+EPSILON_DECAY_COUNT = 6_000_000
 ENDING_EPSILON = 0.1
 DISCOUNT_FACTOR = 0.999
-TD_ERROR_LOSS_FUNCTION = common.element_wise_huber_loss
+TD_ERROR_LOSS_FUNCTION = common.element_wise_squared_loss
 TRAIN_STEP_COUNTER = 0
 # Try Huber_loss this time
-DATE = '10.07.22'
+DATE = '10.10.22'
 NOTES =''
 CHECKPOINT_DIRECTORY = 'TrainedAgents'
 TIME_LIMIT = 500
-DIFFICULTY = 1
+DIFFICULTY = 0
 
 INIT_POLICY = None # help.load_policy(checkpoint_dir=CHECKPOINT_DIRECTORY, agent_id='09.15.22') # Placed Previously Trained Policy Here.
 
@@ -201,20 +201,35 @@ def train_v1(init_policy=None):
             training_steps.append(step)
             phases.append(phase)
             times.append(time_elapse)
-            if np.mean(returns[-MOVING_AVG_POINTS:])>LEVEL_UP_THRESHOLD and py_env.cache['phase']<3:
-                phase += 1
-                print('TRAINING IN PHASE {0}'.format(phase))
+
+            if step == 500_000:
+                phase = 1
                 py_env.cache['phase']=phase
                 eval_py_env.cache['phase']=phase
-            elif np.mean(returns[-MOVING_AVG_POINTS:])>LEVEL_UP_THRESHOLD and py_env.cache['phase']<3:
-                print('TRAINING IN PHASE {0}, DIFFICULTY {1}.'.format(phase, DIFFICULTY))
-                py_env.cache['difficulty']=DIFFICULTY
-                eval_py_env.cache['difficulty']=DIFFICULTY
+            if step == 1_000_000:
+                phase = 2
+                py_env.cache['phase']=phase
+                eval_py_env.cache['phase']=phase
+            if step == 1_500_000:
+                py_env.cache['max_level']=4
+                eval_py_env.cache['max_level']=4
+            if step == 2_000_000:
+                phase = 3
+                py_env.cache['phase']=phase
+                eval_py_env.cache['phase']=phase
             np.savez(save_dir+'/return_loss_log.npz', losses=np.asarray(losses), returns=np.asarray(returns),
                     episodes=np.asarray(training_episodes), steps=np.asarray(training_steps), phases=np.asarray(phases), times=np.asarray(times))
             np.savez(save_dir+'/training_log.npz', episode=np.asarray(py_env.records['episode']), steps=np.asarray(py_env.records['steps']),
                     hit=np.asarray(py_env.records['hit']), success=np.asarray(py_env.records['success']), hitfood=np.asarray(py_env.records['hitfood']),
                     timeout=np.asarray(py_env.records['timeout']), outbound=np.asarray(py_env.records['outbound']))
+
+            if average_return >= 8 and phase==3:
+                print('--- Reach Early Stop Condition. Eval for 20 episodes ---')
+                eval_py_env.episode = 0
+                eval_avg_returns = compute_average_return(eval_tf_env, eval_policy, 20, getcahce=False)
+                if eval_avg_returns>=8: 
+                    print('--EARLY STOP REACHED--. Average Returns = {0}'.format(np.round(eval_avg_returns,2)))
+                    break
 
 
     from matplotlib import pyplot as plt
