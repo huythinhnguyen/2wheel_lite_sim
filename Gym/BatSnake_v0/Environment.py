@@ -72,9 +72,10 @@ class DiscreteAction(py_environment.PyEnvironment):
         self.echoes = self.sensor.run(pose=self.locomotion.pose, objects=self.objects)
         self._state = np.asarray(list(self.echoes.values())).reshape(-1,)
         #
-        if help.out_of_bound(pose=self.locomotion.pose, mode=self.cache['mode']):
-            self._episode_ended = True
-            if self.log: self.status = 'outbound'
+        if self.cache['max_level']==0:
+            if help.out_of_bound(pose=self.locomotion.pose, mode=self.cache['mode']):
+                self._episode_ended = True
+                if self.log: self.status = 'outbound'
         #
         self.step_count += 1
         if self.step_count >= self.cache['time_limit'] or self.level >= self.cache['max_level']:
