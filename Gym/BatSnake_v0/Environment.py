@@ -115,8 +115,9 @@ class DiscreteAction(py_environment.PyEnvironment):
         self.locomotion = State(pose=init_pose, dt=1/controlconfig.CHIRP_RATE)
         self.sensor = Spatializer.Render()
         self.controller = AvoidApproach()
+        level = self.level if self.cache['max_level']>0 else self.cache['init_level']
         self.objects[self.objects[:,2]==sensorconfig.OBJECTS_DICT['pole']]=help.spawn_food(self.cache['mode'],
-                                                                                           self.cache['init_level'], 
+                                                                                           level, 
                                                                                            self.cache['difficulty'])
         #self.objects[0] = np.asarray([(help.MAZE_SIZE/2-help.TUNNEL_WIDTH/4),1.,1])
         self.echoes = self.sensor.run(pose=self.locomotion.pose, objects=self.objects)
