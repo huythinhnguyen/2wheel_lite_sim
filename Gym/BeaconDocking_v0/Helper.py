@@ -135,7 +135,6 @@ def dockingCheck(pose:np.ndarray, beacons:np.ndarray, **kwargs):
     return False 
 
 
-
 def collision_check(inview, mode):
     inview_of_klass = inview[inview[:,2]==sensorconfig.OBJECTS_DICT[mode]][:,:2]
     if np.sum(inview_of_klass[:,0]<HIT_DISTANCE[mode]) > 0:
