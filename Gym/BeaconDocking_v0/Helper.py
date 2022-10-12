@@ -115,10 +115,17 @@ def isBatInViewBeacon(pose:np.ndarray, beacon:np.ndarray, range=BEACON_SPECS['hi
 
 
 def isBatFacingBeacon(pose:np.ndarray, beacon:np.ndarray, fov=np.pi/3):
-    xb, yb = beacon.reshape(3,)[:2]
+    xb, yb, phi = beacon.reshape(3,)
     x, y, yaw = pose
     alpha = np.arctan2(yb-y, xb-x)
-    if np.abs(Builder.wrap2pi(yaw-alpha)) > fov/2: return False
+    beta = np.arctan2(y-yb, x-xb)
+    left = Builder.wrap2pi(phi - beta) < 0
+    if left:
+        if Builder.wrap2pi(yaw-alpha) > fov/2: return False
+        if Builder.wrap2pi(yaw-alpha) < 0: return False
+    else:
+        if Builder.wrap2pi(yaw-alpha) < -fov/2: return False
+        if Builder.wrap2pi(yaw-alpha) > 0: return False
     return True
 
 
