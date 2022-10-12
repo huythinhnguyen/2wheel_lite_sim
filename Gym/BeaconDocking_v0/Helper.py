@@ -1,3 +1,4 @@
+from pydoc import Helper
 import numpy as np
 import sys
 import os
@@ -91,30 +92,48 @@ def objects2beacons(beacon_objs: np.ndarray):
     return beacons
 
 
-def docking_check_with_beacons(pose, beacons):
+def getBeaconInView(pose:np.ndarray, beacons:np.ndarray, range=sensorconfig.FOV_LINEAR, fov=sensorconfig.FOV_ANGULAR):
     x, y, yaw = pose
-    cache={}
-    ego_beacons = np.copy(beacons)
-    ego_beacons[:,0] -= x
-    ego_beacons[:,1] -= y
-    
-    ego_beacons_polar = np.zeros((len(beacons),2))
-    ego_beacons_polar[:,0] = np.sqrt(np.power(ego_beacons[:,0],2) + np.power(ego_beacons[:,1],2))
-    ego_beacons_polar[:,1] = Builder.wrap2pi(np.arctan2((ego_beacons[:,1], ego_beacons[:,1])) - yaw)
+    A = np.empty((len(beacons),2))
+    A[:,0] = beacons[:,0] - x
+    A[:,1] = beacons[:,1] - y
+    Rho = np.power(A[:,0],2) + np.power(A[:,1],2)
+    Alpha=np.arctan2(A[:,1], A[:,0])
+    range_condition = Rho < range
+    fov_condition = np.abs(Builder.wrap2pi(yaw-Alpha)) < fov
+    return beacons[range_condition*fov_condition]
 
-    ego_beacons = ego_beacons[ego_beacons_polar[:,0]<BEACON_SPECS['hit_distance']]
-    ego_beacons_polar = ego_beacons_polar[ego_beacons_polar[:,0]<BEACON_SPECS['hit_distance']]
-    ego_beacons = ego_beacons[np.abs(ego_beacons_polar[:,1])<sensorconfig.FOV_ANGULAR]
-    ego_beacons_polar = ego_beacons_polar[np.abs(ego_beacons_polar[:,1])<sensorconfig.FOV_ANGULAR]
-    
-    if len(ego_beacons_polar)==0: return False, cache
-    if (ego_beacons_polar > 1):
-        ego_beacons = ego_beacons[np.argsort( np.abs(Builder.wrap2pi(ego_beacons[:,2]-yaw)) )]
 
-    docking_angle = Builder.wrap2pi(Builder.wrap2pi(ego_beacons[0,2])-np.pi)
-    if (np.abs(docking_angle)>BEACON_SPECS['hit_angle']/2): return False, cache
-    cache['docking_angle'] = docking_angle
-    return True, cache
+def isBatInViewBeacon(pose:np.ndarray, beacon:np.ndarray, range=BEACON_SPECS['hit_distance'], fov=BEACON_SPECS['hit_angle']):
+    x, y = pose[:2]
+    xb, yb, phi = beacon.reshape(3,)
+    r2 = np.power(x-xb,2) + np.power(y-yb,2)
+    alpha = np.arctan2(y-yb, x-xb)
+    if r2 > np.power(range,2): return False
+    if np.abs(Builder.wrap2pi(phi-alpha)) > fov/2: return False
+    return True
+
+
+def isBatFacingBeacon(pose:np.ndarray, beacon:np.ndarray, fov=np.pi/3):
+    xb, yb = beacon.reshape(3,)[:2]
+    x, y, yaw = pose
+    alpha = np.arctan2(yb-y, xb-x)
+    if np.abs(Builder.wrap2pi(yaw-alpha)) > fov/2: return False
+    return True
+
+
+def dockingCheck(pose:np.ndarray, beacons:np.ndarray, **kwargs):
+    beaconsInView = getBeaconInView(pose, beacons)
+    if len(beaconsInView)<1: return False
+    for beacon in beaconsInView:
+        if ('beacon_range' in kwargs.keys()) and ('beacon_fov' in kwargs.keys()):
+            bat_is_inView = isBatInViewBeacon(pose, beacon, range=kwargs['beacon_range'], fov=kwargs['beacon_fov'])
+        else: bat_is_inView = isBatInViewBeacon(pose, beacon)
+        bat_is_facing = isBatFacingBeacon(pose, beacon, fov=kwargs['facing_fov']) if 'facing_fov' in kwargs.keys() else isBatFacingBeacon(pose, beacon)
+
+        if bat_is_facing and bat_is_inView: return True
+    return False 
+
 
 
 def collision_check(inview, mode):
@@ -160,5 +179,8 @@ def initializer(number_of_positions=9, number_of_poses=4, jit=0): # INIT 9 or 4 
     bat_selector = np.random.randint(low=0, high=number_of_poses)
     bat_pose = poses[bat_selector].reshape(3,)
     return bat_pose, beacons
+
+
+
 
 
