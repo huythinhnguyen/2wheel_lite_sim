@@ -120,6 +120,7 @@ def isBatFacingBeacon(pose:np.ndarray, beacon:np.ndarray, fov=np.pi/3):
     alpha = np.arctan2(yb-y, xb-x)
     beta = np.arctan2(y-yb, x-xb)
     left = Builder.wrap2pi(phi - beta) < 0
+    if np.abs(Builder.wrap2pi(phi-yaw)) < np.pi-(fov/2): return False
     if left:
         if Builder.wrap2pi(yaw-alpha) > fov/2: return False
         if Builder.wrap2pi(yaw-alpha) < 0: return False
