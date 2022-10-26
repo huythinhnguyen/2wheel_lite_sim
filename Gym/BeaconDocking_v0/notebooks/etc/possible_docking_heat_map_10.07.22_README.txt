@@ -1,0 +1,8 @@
+This figure explains possible docking region.
+For each pose, bat is controlled by the approach loop. 
+Score is established by avg of 10 runs.
+fig 1: heat map of pose where avg score=1
+fig 2: overlaying poses where avg score=1
+fig 3: overlaying poses where avg score >0.5, <1
+fig 3: overlaying poses where avg score >0., <=0.5
+score is zero everywhere else.
