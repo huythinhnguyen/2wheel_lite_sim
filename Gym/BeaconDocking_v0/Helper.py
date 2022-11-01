@@ -2,7 +2,7 @@ import numpy as np
 import sys
 import os
 import pathlib
-from Gym.BatSnake_v0.Helper import MAZE_SIZE
+
 
 if pathlib.Path(os.path.abspath(__file__)).parents[2] not in sys.path:
     sys.path.append(str(pathlib.Path(os.path.abspath(__file__)).parents[2]))
@@ -10,7 +10,7 @@ if pathlib.Path(os.path.abspath(__file__)).parents[2] not in sys.path:
 from Sensors.BatEcho import Setting as sensorconfig
 from Arena import Builder
 
-
+MAZE_SIZE = 16.
 HIT_DISTANCE = {'pole': 0.3, 'plant': 0.4}
 OBJECT_SPACING = {'pole': 0.1, 'plant': 0.3}
 
