@@ -20,7 +20,8 @@ import time
 OUTBOUND_LIMIT = 10.
 RANDOM_LIMIT = 8.
 DEFAULT_BEACON = [0., 0., 0.]
-N = 500_000
+N = 100_000
+RUN_ID = input('ENTER RUN_ID')
 
 def outbound(pose, limit=OUTBOUND_LIMIT):
     if (np.sum(np.power(pose[:2],2)) > limit**2): return True
@@ -68,6 +69,7 @@ def run_episode(init_pose, beacon_pose, outbound_func=outbound, time_limit=1000)
 
 
 if __name__ == "__main__":
+    print('RUN ID = '+RUN_ID)
     tic = time.time()
     X = np.zeros((N,3))
     Y = np.zeros((N,1))
@@ -79,9 +81,9 @@ if __name__ == "__main__":
         outcome = run_episode(init_pose, DEFAULT_BEACON)
         Y[i] = 1 if outcome=='docked' else 0 if outcome=='out' else -1
 
-        if (i+1)%10_000==0:
+        if (i+1)%1_000==0:
             toc = time.time()
             print('Progress >> {0}/{1} \t time={2}h'.format(i+1,N, np.round((toc-tic)/3600,2) ))
-            np.savez('dockingZone_dataset.npz', X=X, Y=Y)
-    np.savez('dockingZone_dataset.npz', X=X, Y=Y)
+            np.savez('dockingZone_dataset_'+RUN_ID+'.npz', X=X, Y=Y)
+    np.savez('dockingZone_dataset_'+RUN_ID+'.npz', X=X, Y=Y)
 
