@@ -18,9 +18,9 @@ from Control.SensorimotorLoops import Setting as controlconfig
 import time
 
 OUTBOUND_LIMIT = 10.
-RANDOM_LIMIT = 8.
+RANDOM_LIMIT = 10.
 DEFAULT_BEACON = [0., 0., 0.]
-N = 100_000
+N = 50_000
 RUN_ID = input('ENTER RUN_ID')
 WAIT_BEFORE_COMBINE = 1800
 
@@ -88,7 +88,7 @@ if __name__ == "__main__":
             np.savez('dockingZone_dataset_'+RUN_ID+'.npz', X=X, Y=Y)
     np.savez('dockingZone_dataset_'+RUN_ID+'.npz', X=X, Y=Y)
 
-    if RUN_ID=='5':
+    if RUN_ID=='4':
         time.sleep(WAIT_BEFORE_COMBINE)
         for i in range(1,5):
             data = np.load('dockingZone_dataset_'+str(i)+'.npz')
