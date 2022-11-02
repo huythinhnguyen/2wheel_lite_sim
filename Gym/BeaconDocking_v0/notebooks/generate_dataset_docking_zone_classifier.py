@@ -23,6 +23,7 @@ DEFAULT_BEACON = [0., 0., 0.]
 N = 50_000
 RUN_ID = input('ENTER RUN_ID')
 WAIT_BEFORE_COMBINE = 1800
+MULTI_PROCESS_NUMBER = 4
 
 def outbound(pose, limit=OUTBOUND_LIMIT):
     if (np.sum(np.power(pose[:2],2)) > limit**2): return True
@@ -88,17 +89,17 @@ if __name__ == "__main__":
             np.savez('dockingZone_dataset_'+RUN_ID+'.npz', X=X, Y=Y)
     np.savez('dockingZone_dataset_'+RUN_ID+'.npz', X=X, Y=Y)
 
-    if RUN_ID=='4':
+    if RUN_ID==str(MULTI_PROCESS_NUMBER):
         time.sleep(WAIT_BEFORE_COMBINE)
-        for i in range(1,5):
+        for i in range(1,MULTI_PROCESS_NUMBER):
             data = np.load('dockingZone_dataset_'+str(i)+'.npz')
             Xi, Yi = data['X'], data['Y']
             X = np.vstack((X, Xi))
             Y = np.vstack((Y, Yi))
         print('Saving Grand Dataset')
         np.savez('dockingZone_dataset.npz', X=X, Y=Y)
-        for i in range(1,6):
-            print('Gabage removal '+str(i)+'/10')
+        for i in range(1,MULTI_PROCESS_NUMBER+1):
+            print('Gabage removal '+str(i)+'/4')
             filepath = os.path.join(os.getcwd(), 'dockingZone_dataset_'+str(i)+'.npz')
             os.remove(filepath)
         print('FINISHED')
