@@ -11,10 +11,10 @@ from Sensors.BatEcho import Setting as sensorconfig
 from Arena import Builder
 
 MAZE_SIZE = 16.
-HIT_DISTANCE = {'pole': 0.3, 'plant': 0.4}
+HIT_DISTANCE = {'pole': 0.3, 'plant': 0.5}
 OBJECT_SPACING = {'pole': 0.1, 'plant': 0.3}
 
-BEACON_SPECS = {'mode': 'bull', 'bull_angle': np.pi/3, 'hit_distance': 0.75,
+BEACON_SPECS = {'mode': 'bull', 'bull_angle': np.pi/3, 'hit_distance':0.8, 'd':0.3,
                 'hit_angle': np.pi/2} 
 
 JITTER={'xy': 0.1, 'theta': np.pi/18}
@@ -31,7 +31,7 @@ def beacon2objects(x, y, theta, d, mode=BEACON_SPECS['mode'], bull_angle=BEACON_
     return np.vstack((base, horn))
 
 
-def beacons2objects(beacons: np.ndarray, d=0.3, mode=BEACON_SPECS['mode'], bull_angle=BEACON_SPECS['bull_angle']):
+def beacons2objects(beacons: np.ndarray, d=BEACON_SPECS['d'], mode=BEACON_SPECS['mode'], bull_angle=BEACON_SPECS['bull_angle']):
     objects = np.asarray([], dtype=np.float32).reshape(0,3)
     for beacon in beacons:
         x, y, theta = beacon
