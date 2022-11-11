@@ -191,6 +191,40 @@ def initializer(number_of_positions=9, number_of_poses=4, jit=0): # INIT 9 or 4 
     return bat_pose, beacons
 
 
+def avoid_overwrite(pose, maze_size=MAZE_SIZE, margin=2):
+    x, y = pose[:2]
+    t = 0.5*maze_size - margin
+    if (np.abs(x) > t) or (np.abs(y) > t): return True
+    return False
 
 
+def sort_beacons_by_distance(pose, beacons):
+    x_sq = np.power(beacons[:,0] - pose[0],2)
+    y_sq = np.power(beacons[:,1] - pose[1],2)
+    distance_squared = x_sq + y_sq
+    sorted_beacons = beacons[np.argsort(distance_squared)]
+    return sorted_beacons, np.sqrt(distance_squared)
 
+def beacon_centric_pose_converter(pose, beacon):
+    p = np.copy(pose).reshape(1,3)
+    # translate -> beacons center and zero zero.
+    p[:,:2] = p[:,:2] - beacon[:2].reshape(-1,2)
+    # rotate -> beacon direction yaw = 0
+    theta = -beacon[2]
+    rotmat = np.asarray([np.cos(theta), -np.sin(theta), np.sin(theta), np.cos(theta)], dtype=np.float32).reshape(2,2)
+    p[:,:2] = np.matmul(rotmat, p[:,:2].T).T
+    p[:,2] = Builder.wrap2pi(p[:,2] + theta)
+    return p
+
+def behavior(pose, beacons, avoid_overwrite_func, sort_beacons_by_distance_func, beacon_centric_pose_convert_func, cls, approach_likelihood=0.5, margin=2):
+    if avoid_overwrite_func(pose, margin=margin):
+        return 0., 3
+    sorted_beacons, sorted_distances = sort_beacons_by_distance_func(pose, beacons)
+    for beacon, dist in zip(sorted_beacons, sorted_distances):
+        if dist > 8: continue
+        beacon_centric_pose = beacon_centric_pose_convert_func(pose, beacon)
+        dockingZone_indicator = cls.predict(beacon_centric_pose.reshape(1,3))[0]
+        if dockingZone_indicator == 0: return 1., dockingZone_indicator
+        if dockingZone_indicator == 1: return 0., dockingZone_indicator
+    if np.random.rand() < approach_likelihood: return 1., dockingZone_indicator
+    else: return 0., dockingZone_indicator
