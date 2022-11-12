@@ -90,7 +90,7 @@ if __name__=='__main__':
             zones_ls.append(dockingZones)
             print(f'Episode {episode} completed')
         if result == 'hit' or result == 'out':
-            print(f'Episode {episode} failed')
+            print(f'Episode {episode+1} failed')
         
         if episode%100 == 0:
             df = pd.DataFrame({'compresses': compresses_ls, 'envelopes': envelopes_ls, 'poses': poses_ls, 'actions': actions_ls, 'zones': zones_ls})
