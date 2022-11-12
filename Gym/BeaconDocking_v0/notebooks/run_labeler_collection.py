@@ -44,7 +44,7 @@ if __name__=='__main__':
     episode = 0
     while episode < NUMBER_OF_EPISODES:
         init_pose, beacons = Helper.initializer(jit=JITTER_LEVEL)
-        objects = Helper.concatenate_beacons(beacon_objs=Helper.beacon2objects(beacons), objects=obstacles)
+        objects = Helper.concatenate_beacons(beacon_objs=Helper.beacons2objects(beacons), objects=obstacles)
         pose = np.copy(init_pose)
         pose = np.copy(init_pose)
         render = Render()
