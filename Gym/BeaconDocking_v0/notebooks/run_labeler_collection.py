@@ -75,7 +75,7 @@ if __name__=='__main__':
             action, zone = Helper.behavior(pose, beacons=beacons, classifier=cls)
             actions.append(action)
             dockingZones.append(zone)
-            v, omega = controller.get_kinematics(compressed, approach_factor=action)
+            v, omega = controller.get_kinematic(compressed, approach_factor=action)
             state.update_kinematic(kinematic=[v, omega])
             state.update_pose()
             pose = np.copy(state.pose)
