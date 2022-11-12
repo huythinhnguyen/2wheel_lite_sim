@@ -106,7 +106,7 @@ if __name__=='__main__':
                 continue
             df_temp = pd.read_pickle(f'./labeled_echo_data/run_{i}.pkl')
             df = pd.concat([df, df_temp], ignore_index=True)
-        df.to_pickle(f'./labeled_echo_data/run_{DATE}.pkl')
+        df.to_pickle(f'./labeled_echo_data/run_ApproachProb{APPROACH_LIKELIHOOD}_{DATE}.pkl')
 
     # Print out completion message
     print('Collection completed')
