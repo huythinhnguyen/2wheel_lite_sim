@@ -92,7 +92,7 @@ if __name__=='__main__':
         if result == 'hit' or result == 'out':
             print(f'Episode {episode} failed')
         
-        if e%100 == 0:
+        if episode%100 == 0:
             df = pd.DataFrame({'compresses': compresses_ls, 'envelopes': envelopes_ls, 'poses': poses_ls, 'actions': actions_ls, 'zones': zones_ls})
             df.to_pickle(f'./labeled_echo_data/run_{RUN_ID}.pkl')
 
