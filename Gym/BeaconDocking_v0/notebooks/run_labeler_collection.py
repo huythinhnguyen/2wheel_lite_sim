@@ -92,8 +92,10 @@ if __name__=='__main__':
         if result == 'hit' or result == 'out':
             print(f'Episode {episode+1} failed')
         
-        if episode%100 == 0:
+        if episode%100 == 0 and episode != 0:
             df = pd.DataFrame({'compresses': compresses_ls, 'envelopes': envelopes_ls, 'poses': poses_ls, 'actions': actions_ls, 'zones': zones_ls})
+            # if labeled_echo_data folder does not exist, create it
+            if not os.path.exists('labeled_echo_data'): os.makedirs('labeled_echo_data')
             df.to_pickle(f'./labeled_echo_data/run_{RUN_ID}.pkl')
 
     if RUN_ID==MAX_RUN:
