@@ -19,7 +19,7 @@ from Simulation.Motion import State
 from Control.SensorimotorLoops import Setting as controlconfig
 
 RUN_ID = int(input('Enter Run ID = '))
-APPROACH_LIKELIHOOD = int(input('Enter Approach Likelihood (0-1) = '))
+APPROACH_LIKELIHOOD = float(input('Enter Approach Likelihood (0.0-1.0) = '))
 MARGIN = 1.9
 JITTER_LEVEL = 2
 TIME_LIMIT = 1_000
