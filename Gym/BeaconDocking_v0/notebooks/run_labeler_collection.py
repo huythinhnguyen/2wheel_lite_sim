@@ -19,13 +19,13 @@ from Simulation.Motion import State
 from Control.SensorimotorLoops import Setting as controlconfig
 
 RUN_ID = int(input('Enter Run ID = '))
-APPROACH_LIKELIHOOD = 0.3
+APPROACH_LIKELIHOOD = int(input('Enter Approach Likelihood (0-1) = '))
 MARGIN = 1.9
 JITTER_LEVEL = 2
 TIME_LIMIT = 1_000
 NUMBER_OF_EPISODES = 3_000
 COMPRESSED_SIZE = len(sensorconfig.COMPRESSED_DISTANCE_ENCODING)
-RAW_SIZE = len(sensorconfig.DISTANCE_ENCODING)
+#RAW_SIZE = len(sensorconfig.DISTANCE_ENCODING)
 MAX_RUN = 4
 # get today date dot separated format MM.DD.YY
 DATE = time.strftime("%m.%d.%y")
