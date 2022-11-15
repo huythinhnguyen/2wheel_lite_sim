@@ -38,7 +38,7 @@ def echo_dict_to_numpy(dict):
 
 
 if __name__=='__main__':
-    obstacles = Helper.box_builder('');
+    obstacles = Helper.box_builder('')
     cls = load('dockingZone_classifier.joblib')
     compresses_ls, envelopes_ls, poses_ls, actions_ls, zones_ls= [],[],[],[],[]
     episode = 0
