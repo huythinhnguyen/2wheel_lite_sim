@@ -46,7 +46,6 @@ if __name__=='__main__':
         init_pose, beacons = Helper.initializer(jit=JITTER_LEVEL)
         objects = Helper.concatenate_beacons(beacon_objs=Helper.beacons2objects(beacons), objects=obstacles)
         pose = np.copy(init_pose)
-        pose = np.copy(init_pose)
         render = Render()
         state = State(pose=pose, dt=1/controlconfig.CHIRP_RATE)
         controller = AvoidApproach()
