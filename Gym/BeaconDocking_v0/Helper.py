@@ -192,9 +192,16 @@ def initializer(number_of_positions=9, number_of_poses=4, jit=0): # INIT 9 or 4 
 
 
 def avoid_overwrite(pose, maze_size=MAZE_SIZE, margin=2):
-    x, y = pose[:2]
+    x, y, yaw = pose[:3]
     t = 0.5*maze_size - margin
-    if (np.abs(x) > t) or (np.abs(y) > t): return True
+    # East wall:
+    if (x>t) and (np.abs(yaw)<np.pi/2): return True
+    # North wall:
+    if (y>t) and (yaw>0) and (yaw<np.pi): return True
+    # West wall:
+    if (x<-t) and (np.abs(yaw)>np.pi/2): return True
+    # South wall:
+    if (y<-t) and (yaw<0) and (yaw>-np.pi): return True
     return False
 
 
@@ -219,12 +226,12 @@ def beacon_centric_pose_converter(pose, beacon):
 def behavior(pose, beacons, classifier, avoid_overwrite_func=avoid_overwrite, 
             sort_beacons_by_distance_func=sort_beacons_by_distance, 
             beacon_centric_pose_convert_func=beacon_centric_pose_converter, 
-            approach_likelihood=0.5, margin=2):
+            approach_likelihood=0.5, margin=2, scan_range=6):
     if avoid_overwrite_func(pose, margin=margin):
         return 0., 3
     sorted_beacons, sorted_distances = sort_beacons_by_distance_func(pose, beacons)
     for beacon, dist in zip(sorted_beacons, sorted_distances):
-        if dist > 8: continue
+        if dist > scan_range: continue
         beacon_centric_pose = beacon_centric_pose_convert_func(pose, beacon)
         dockingZone_indicator = classifier.predict(beacon_centric_pose.reshape(1,3))[0]
         if dockingZone_indicator == 0: return 1., dockingZone_indicator
