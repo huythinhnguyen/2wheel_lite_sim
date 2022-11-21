@@ -18,11 +18,15 @@ from Control.SensorimotorLoops.BatEcho import AvoidApproach, Avoid
 from Simulation.Motion import State
 from Control.SensorimotorLoops import Setting as controlconfig
 
+from Gym.BeaconDocking_v0 import ConfigOverwite
+
+ConfigOverwite.overwrite_config(controlconfig, sensorconfig)
+
 RUN_ID = int(input('Enter Run ID = '))
 APPROACH_LIKELIHOOD = float(input('Enter Approach Likelihood (0.0-1.0) = '))
-MARGIN = 1.9
+MARGIN = 1.7
 JITTER_LEVEL = 2
-TIME_LIMIT = 1_000
+TIME_LIMIT = 5_000
 NUMBER_OF_EPISODES = 3_000
 COMPRESSED_SIZE = len(sensorconfig.COMPRESSED_DISTANCE_ENCODING)
 #RAW_SIZE = len(sensorconfig.DISTANCE_ENCODING)
