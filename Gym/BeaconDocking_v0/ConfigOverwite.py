@@ -1,0 +1,22 @@
+from math import pi
+
+GRAVI_ACCEL = 9.8
+
+CONTROL_OVERWRITE = {
+    'CENTRIFUGAL_ACCEL_FACTOR': 5*GRAVI_ACCEL,
+    'MAX_LINEAR_VELOCITY': 2.5,
+    'MAX_ANGLE_VELOCITY': 20*pi,
+    'BODY_RADIUS': 0.15,
+    'BAIL_DISTANCE_MULTIPLIER': 5,
+}
+
+SENSOR_OVERWRITE = {}
+
+def overwrite_config(control_config, sensor_config):
+    for key, value in CONTROL_OVERWRITE.items():
+        if hasattr(control_config, key): setattr(control_config, key, value)
+        else: raise ValueError('Control config has no attribute {}'.format(key))
+    for key, value in SENSOR_OVERWRITE.items():
+        if hasattr(sensor_config, key): setattr(sensor_config, key, value)
+        else: raise ValueError('Sensor config has no attribute {}'.format(key))
+    return sensor_config, control_config
