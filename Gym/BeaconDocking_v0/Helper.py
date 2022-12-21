@@ -226,7 +226,7 @@ def beacon_centric_pose_converter(pose, beacon):
 def behavior(pose, beacons, classifier, avoid_overwrite_func=avoid_overwrite, 
             sort_beacons_by_distance_func=sort_beacons_by_distance, 
             beacon_centric_pose_convert_func=beacon_centric_pose_converter, 
-            approach_likelihood=0.5, margin=2, scan_range=6):
+            approach_likelihood=0.5, margin=2, scan_range=5):
     if avoid_overwrite_func(pose, margin=margin):
         return 0., 3
     sorted_beacons, sorted_distances = sort_beacons_by_distance_func(pose, beacons)
