@@ -90,6 +90,7 @@ class Avoid(Cue):
         super().__init__(background)
         self.bot_convert = config.ROBOT_CONVERSION
         self.max_linear_velocity = config.MAX_LINEAR_VELOCITY if not self.bot_convert else config.ROBOT_MAX_LINEAR_VELOCITY
+        self.min_linear_velocity = config.MIN_LINEAR_VELOCITY
         self.max_angular_velocity= config.MAX_ANGULAR_VELOCITY if not self.bot_convert else config.ROBOT_MAX_ANGULAR_VELOCITY
         self.max_angular_acceleration = config.MAX_ANGULAR_ACCELERATION if not self.bot_convert else config.ROBOT_MAX_ANGULAR_ACCELERATION
         self.linear_velo_offset = config.LINEAR_VELOCITY_OFFSET if not self.bot_convert else config.ROBOT_LINEAR_VELOCITY_OFFSET
@@ -119,6 +120,7 @@ class Avoid(Cue):
             (1 - np.power((1-self.K*self.A*(distance-self.body_radius)),1/self.K-1)) \
             + self.linear_velo_offset
         if v>self.max_linear_velocity: v=self.max_linear_velocity
+        if v<self.min_linear_velocity: v=self.min_linear_velocity
         return self._linear_accel_cap(v)
 
 
