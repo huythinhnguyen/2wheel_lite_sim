@@ -6,6 +6,7 @@ GRAVI_ACCEL = 9.8
 ### VELOCITY LIMIT  ###############################################
 ###################################################################
 MAX_LINEAR_VELOCITY = 5 # robot max velo is 0.5 m/s
+MIN_LINEAR_VELOCITY = 0.01 # robot min velo is 0.01 m/s
 MAX_ANGULAR_VELOCITY = 10*pi
 MAX_ANGULAR_ACCELERATION = 1*MAX_ANGULAR_VELOCITY
 LINEAR_VELOCITY_OFFSET = 0.
