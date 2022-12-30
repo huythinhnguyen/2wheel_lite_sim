@@ -24,197 +24,223 @@ ConfigOverwite.overwrite_config(controlconfig, sensorconfig)
 
 RUN_ID = int(input('Enter Run ID = '))
 APPROACH_LIKELIHOOD = float(input('Enter Approach Likelihood (0.0-1.0) = '))
-MARGIN = 1.7
+MARGIN = 1.5
 JITTER_LEVEL = 2
-TIME_LIMIT = 10_000
-NUMBER_OF_EPISODES = 3_000
+DISTANCE_TO_CRASH = 0.6
+TIME_LIMIT = 5_000
+NUMBER_OF_EPISODES = 3
 COMPRESSED_SIZE = len(sensorconfig.COMPRESSED_DISTANCE_ENCODING)
 #RAW_SIZE = len(sensorconfig.DISTANCE_ENCODING)
 MAX_RUN = 4
 # get today date dot separated format MM.DD.YY
 DATE = time.strftime("%m.%d.%y")
-
-N_LAST_STEPS = 200
-SAFE_STEPS = 5
-
-def echo_dict_to_numpy(dict):
-    ls = []
-    for data in dict.values(): ls.append(data.reshape(-1,))
-    return np.concatenate(ls)
+DOCKING_ZONE_CLASSIFIER_PATH = '../dockingZone_classifier_macOS.joblib'
+N_LAST_STEPS = 300
+SAFE_STEPS = 30
 
 
-def echo_numpy_to_dict(array):
-    dict = {
-        'left': array[:COMPRESSED_SIZE].reshape(-1,),
-        'right': array[COMPRESSED_SIZE:2*COMPRESSED_SIZE].reshape(-1,),
-    }
-    return dict
-
-
-def remove_last_step(compresses, poses):
-    compresses = compresses[:-1]
-    poses = poses[:-1]
-    return compresses, poses
-
-def flip_action(action):
-    if action==0: return 1
-    if action==1: return 0
-    return action
-
-def check_status(pose, inview, beacons, objects):
-    if Helper.dockingCheck(pose, beacons=beacons):
-        return 'docked'
-    if Helper.collisionCheck(inview, 'plant') or Helper.collisionCheck(inview, 'pole'):
-        return 'hit'
-    return 'safe'
-
-def replay(compresses, poses, actions, zones, vs, omegas, 
-            cls, objects, beacons, safe_steps=SAFE_STEPS):
-    i = 0
-    controller = AvoidApproach()
+def run_1_primer_episode(time_limit=TIME_LIMIT):
+    # initialize the episode
+    obstacles = Helper.box_builder('')
+    cls = load(DOCKING_ZONE_CLASSIFIER_PATH)
+    init_pose, beacons = Helper.initializer(jit=JITTER_LEVEL)
+    objects = Helper.concatenate_beacons(beacon_objs=Helper.beacons2objects(beacons), objects=obstacles)
+    # initialize data containers
+    poses, compresses, zones, actions, kine_caches, vs, omegas = [], [], [], [], [], [], []
+    # initialize the simulation-render and controller:
+    pose = np.copy(init_pose)
     render = Render()
-    state = State(pose=poses[-1], dt=controlconfig.CHIRP_RATE)
-    
-    while True:
-        next_poses = np.asarray([], dtype=np.float32).reshape(0,3)
-        next_compresses = np.asarray([], dtype=np.float32).reshape(0,COMPRESSED_SIZE*2)
-        next_actions, next_zones, next_vs, next_omegas = [], [], [], []
-        poses, compresses, actions, zones, vs, omegas = poses[:-i], compresses[:-i], actions[:-i], zones[:-i], vs[:-i], omegas[:-i]
-        pose, compressed, action, zone = (poses[-1], echo_numpy_to_dict(compresses[-1]), flip_action(actions[-1]), -1)
-        actions[-1]=action
-        zones[-1]=zone
+    state = State(pose=np.copy(pose), dt=1/controlconfig.CHIRP_RATE)
+    controller = AvoidApproach()
+    result='out'
 
-        controller.kine_cache['v'] = vs[-2]
-        controller.kine_cache['omega'] = omegas[-2]
+    for _ in range(time_limit):
+        poses.append(pose)
+        compressed = render.run(pose=pose, objects=objects)
+        compresses.append(compressed)
+        docked = Helper.dockingCheck(pose, beacons=beacons)
+        if docked:
+            result = 'docked'
+            _,_,_ = poses.pop(), compresses.pop()
+            break
+        inview = render.cache['inview']
+        if Helper.collision_check(inview, 'plant') or Helper.collision_check(inview, 'pole'):
+            result = 'hit'
+            print('HIT')
+            _,_,_ = poses.pop(), compresses.pop()
+            break
+        action, zone = Helper.behavior(pose, beacons=beacons, classifier=cls)
+        zones.append(zone)
+        actions.append(action)
+        kine_caches.append(controller.kine_cache)
         v, omega = controller.get_kinematic(compressed, approach_factor=action)
-        vs[-1] = v
-        omegas[-1] = omega
-        state.pose = np.copy(pose)
+        vs.append(v)
+        omegas.append(omega)
         state.update_kinematic(kinematic=[v, omega])
         state.update_pose()
-        next_pose = np.copy(state.pose)
-        next_compressed = render.run(pose=next_pose, objects=objects)
-        inview = render.cache['inview']
-        status = check_status(pose=next_pose, inview=inview, beacons=beacons, objects=objects)
-        if status=='docked':
-            return compresses, poses, actions, zones, vs, omegas
-        if status=='hit':
-            i+=1
-            continue
-        if status=='safe':
-            for _ in range(safe_steps+i):
-                next_poses = np.vstack((next_poses, next_pose.reshape(1,3)))
-                next_compresses = np.vstack((next_compresses, echo_dict_to_numpy(next_compressed).reshape(1,-1)))
-                action, zone = Helper.behavior(pose=next_pose, beacons=beacons, classifier=cls)
-                next_actions.append(action)
-                next_zones.append(zone)
-                v, omega = controller.get_kinematic(next_compressed, approach_factor=action)
-                vs.append(v)
-                omegas.append(omega)
-                state.update_kinematic(kinematic=[v, omega])
-                state.update_pose()
-                next_pose = np.copy(state.pose)
-                next_compressed = render.run(pose=next_pose, objects=objects)
-                inview = render.cache['inview']
-                status = check_status(pose=next_pose, inview=inview, beacons=beacons, objects=objects)
-                if status=='docked':
-                    break
-                if status=='hit':
-                    i+=1
-                    continue
-            break
-
-    compresses = np.vstack((compresses, next_compresses))
-    poses = np.vstack((poses, next_poses))
-    actions = actions + next_actions
-    zones = zones + next_zones
-    vs = vs + vs
-    omegas = omegas + omegas
-    return compresses, poses, actions, zones, vs, omegas
+        pose = np.copy(state.pose)
+    return result, beacons, objects, poses, compresses, zones, actions, kine_caches, vs, omegas
 
 
-def get_N_last_steps(compresses, poses, actions, zones, result, N=N_LAST_STEPS):
-    if result=='docked':
-        compresses = compresses[-N:]
-        poses = poses[-N:]
-        actions = actions[-N:]
-        zones = zones[-N:]
-    if result=='hit':
-        compresses, poses, actions, zones = replay(compresses, poses, actions, zones)
-    return compresses, poses, actions, zones
+def replay(beacons, objects, poses, compresses, actions, kine_caches, dist2crash=DISTANCE_TO_CRASH):
+    result = 'hit'
+    crashsite = poses[-1]
+    kth = 0
+    while (result=='hit'):
+        kth -= 1
+        if actions[kth]==0: continue
+        for N in [abs(kth)-1]+list(range(abs(kth))):
+            replay_poses, replay_compresses = [poses[kth]], [compresses[kth]]
+            replay_zones, replay_actions = [-1], [0]
+            replay_kine_caches, replay_vs, replay_omegas = [kine_caches[kth]], [], []
+            cls = load(DOCKING_ZONE_CLASSIFIER_PATH)
 
-if __name__=='__main__':
-    obstacles = Helper.box_builder('')
-    cls = load('dockingZone_classifier.joblib')
-    compresses_ls, envelopes_ls, poses_ls, actions_ls, zones_ls= [],[],[],[],[]
-    episode = 0
-    while episode < NUMBER_OF_EPISODES:
-        init_pose, beacons = Helper.initializer(jit=JITTER_LEVEL)
-        objects = Helper.concatenate_beacons(beacon_objs=Helper.beacons2objects(beacons), objects=obstacles)
-        pose = np.copy(init_pose)
-        render = Render()
-        state = State(pose=pose, dt=1/controlconfig.CHIRP_RATE)
-        controller = AvoidApproach()
-        actions = []
-        dockingZones = []
-        poses = np.copy(pose).reshape(1,3)
-        compresses = np.asarray([]).reshape(0,2*COMPRESSED_SIZE)
-        #envelopes = np.asarray([]).reshape(0, 2*RAW_SIZE)
-        #episode_ended = False
-        result = 'out'
-        for _ in range(TIME_LIMIT):
-            compressed = render.run(pose, objects)
-            compresses = np.vstack((compresses, echo_dict_to_numpy(compressed).reshape(1,-1)))
-            #envelopes = np.vstack((envelopes, np.concatenate([render.cache['left_envelope'].reshape(-1,),
-            #                            render.cache['right_envelope'].reshape(-1,)]) ))
-            docked = Helper.dockingCheck(pose, beacons=beacons)
-            if docked:
-                result = 'docked'
-                #episode_ended = True
-                break
-            inview = render.cache['inview']
-            if Helper.collision_check(inview, 'plant') or Helper.collision_check(inview, 'pole'):
-                result = 'hit'
-                #episode_ended = True
-                break
-            action, zone = Helper.behavior(pose, beacons=beacons, classifier=cls)
-            actions.append(action)
-            dockingZones.append(zone)
-            v, omega = controller.get_kinematic(compressed, approach_factor=action)
+            # take the very first step (the course correction step)
+            pose = np.copy(replay_poses[0])
+            render = Render()
+            state = State(pose=np.copy(pose), dt=1/controlconfig.CHIRP_RATE)
+            controller = AvoidApproach()
+            controller.kine_cache.update(replay_kine_caches[0])
+            result='out'
+            action = replay_actions[0]
+            v, omega = controller.get_kinematic(input_echoes=replay_compresses[0], approach_factor=action)
+            replay_vs.append(v)
+            replay_omegas.append(omega)
             state.update_kinematic(kinematic=[v, omega])
             state.update_pose()
             pose = np.copy(state.pose)
-            poses = np.vstack((poses, pose.reshape(1,3)))
+            i = 0
+            N_replay = SAFE_STEPS
+            while (i<N_replay):
+                replay_poses.append(pose)
+                compressed = render.run(pose=pose, objects=objects)
+                replay_compresses.append(compressed)
+                docked = Helper.dockingCheck(pose, beacons=beacons)
+                if docked:
+                    result = 'docked'
+                    _,_ = replay_poses.pop(), replay_compresses.pop()
+                    break
+                inview = render.cache['inview']
+                if Helper.collision_check(inview, 'plant') or Helper.collision_check(inview, 'pole'):
+                    result = 'hit'
+                    _,_ = replay_poses.pop(), replay_compresses.pop()
+                    break
+                if i<N: action, zone=0,-1
+                else: action, zone = Helper.behavior(pose, beacons=beacons, classifier=cls)
 
-        if result == 'docked':
-            episode += 1
-            compresses_ls.append(compresses)
-            #envelopes_ls.append(envelopes)
-            poses_ls.append(poses)
-            actions_ls.append(actions)
-            zones_ls.append(dockingZones)
-            print(f'Episode {episode} completed')
-        if result == 'hit' or result == 'out':
-            print(f'Episode {episode+1} failed')
+                replay_zones.append(zone)
+                replay_actions.append(action)
+                replay_kine_caches.append(controller.kine_cache)
+                v, omega = controller.get_kinematic(compressed, approach_factor=action)
+                replay_vs.append(v)
+                replay_omegas.append(omega)
+                state.update_kinematic(kinematic=[v, omega])
+                state.update_pose()
+                pose = np.copy(state.pose)
+                i += 1
+                if i==N_replay:
+                    current_dist2crash = np.linalg.norm(pose[:2]-crashsite[:2])
+                    if current_dist2crash < dist2crash: N_replay += SAFE_STEPS
+            
+            if result=='out': print('OUT')
+            if N==(abs(kth)-1):
+                if result=='hit': break
+                else: continue
+            if result!='hit': break
+    return kth, N, replay_poses, replay_compresses, replay_zones, replay_actions, replay_kine_caches, replay_vs, replay_omegas
+
+
+def replace_with_replay(kth, poses, compresses, zones, actions, kine_caches, vs, omegas,
+                        replay_poses, replay_compresses, replay_zones, replay_actions, replay_kine_caches, replay_vs, replay_omegas):
+    poses[kth:] = replay_poses
+    compresses[kth:] = replay_compresses
+    zones[kth:] = replay_zones
+    actions[kth:] = replay_actions
+    kine_caches[kth:] = replay_kine_caches
+    vs[kth:] = replay_vs
+    omegas[kth:] = replay_omegas
+    return poses, compresses, zones, actions, kine_caches, vs, omegas
+
+
+def compile_data_into_array(beacons, objects, poses, compresses, zones, actions, vs, omegas, nsteps=N_LAST_STEPS):
+    # place each data into a numpy array
+    # if data len is > nsteps, truncate the beginning
+    # else do nothing
+
+    if type(beacons) is not np.ndarray: beacons = np.array(beacons).reshape(-1,3)
+    if type(objects) is not np.ndarray: objects = np.array(objects).reshape(-1,3)
+    poses = np.asarray(poses).rehape(-1,3)
+    if len(poses)>nsteps: poses = poses[-nsteps:]
+    # compresses is a list of dictionaries with keys 'left' and 'right'
+    # convert compresses into a list of numpy array which is concatenated from the 1-D array from 'left' and 'right'
+    # do this without using an explicit for loop
+    if len(compresses)>nsteps: compresses = compresses[-nsteps:]
+    for i in range(len(compresses)):
+        compresses[i] = np.concatenate([compresses[i]['left'], compresses[i]['right']])
+    compresses = np.asarray(compresses).reshape(-1, 2*COMPRESSED_SIZE)
+    if len(zones)>nsteps: zones = zones[-nsteps:]
+    zones = np.asarray(zones)
+    if len(actions)>nsteps: actions = actions[-nsteps:]
+    actions = np.asarray(actions)
+    if len(vs)>nsteps: vs = vs[-nsteps:]
+    vs = np.asarray(vs)
+    if len(omegas)>nsteps: omegas = omegas[-nsteps:]
+    omegas = np.asarray(omegas)
+    return beacons, objects, poses, compresses, zones, actions, vs, omegas
+
+
+def main():
+    beacons_ls, objects_ls, poses_ls, compresses_ls, zones_ls, actions_ls, vs_ls, omegas_ls = [], [], [], [], [], [], [], []
+    episode = 0
+    while episode < NUMBER_OF_EPISODES:
+        result, beacons, objects, poses, compresses, zones, actions, kine_caches, vs, omegas = run_1_primer_episode()
+        if result=='out': continue
+        if result=='hit':
+            kth, N, replay_poses, replay_compresses, replay_zones, replay_actions, replay_kine_caches, replay_vs, replay_omegas = replay(
+                beacons=beacons, objects=objects, poses=poses, compresses=compresses, actions=actions, kine_caches=kine_caches
+            )
+            poses, compresses, zones, actions, kine_caches, vs, omegas = replace_with_replay(
+                kth, poses, compresses, zones, actions, kine_caches, vs, omegas,
+                replay_poses, replay_compresses, replay_zones, replay_actions, replay_kine_caches, replay_vs, replay_omegas)
+        beacons, objects, poses, compresses, zones, actions, vs, omegas = compile_data_into_array(beacons, objects, poses, compresses, zones, actions, vs, omegas)
+        episode += 1
+        beacons_ls.append(beacons)
+        objects_ls.append(objects)
+        poses_ls.append(poses)
+        compresses_ls.append(compresses)
+        zones_ls.append(zones)
+        actions_ls.append(actions)
+        vs_ls.append(vs)
+        omegas_ls.append(omegas)
         
-        if episode%100 == 0 and episode != 0:
-            df = pd.DataFrame({'compresses': compresses_ls, 'poses': poses_ls, 'actions': actions_ls, 'zones': zones_ls})
-            # if labeled_echo_data folder does not exist, create it
+        if episode%500==0 and episode!=0:
+            df = pd.DataFrame({'beacons': beacons_ls,
+                                'objects': objects_ls,
+                                'poses': poses_ls,
+                                'compresses': compresses_ls,
+                                'zones': zones_ls,
+                                'actions': actions_ls,
+                                'vs': vs_ls,
+                                'omegas': omegas_ls})
             if not os.path.exists('labeled_echo_data'): os.makedirs('labeled_echo_data')
             df.to_pickle(f'./labeled_echo_data/run_{RUN_ID}.pkl')
 
-    if RUN_ID==MAX_RUN:
-        time.sleep(1800)
-        for i in range(1,MAX_RUN+1):
-            if i==1: 
-                df = pd.read_pickle(f'./labeled_echo_data/run_{i}.pkl')
-                continue
-            df_temp = pd.read_pickle(f'./labeled_echo_data/run_{i}.pkl')
-            df = pd.concat([df, df_temp], ignore_index=True)
-        # remove the run_# files
-        for i in range(1,MAX_RUN+1): os.remove(f'./labeled_echo_data/run_{i}.pkl')
-        df.to_pickle(f'./labeled_echo_data/run_ApproachProb_{APPROACH_LIKELIHOOD}_{DATE}.pkl')
+        if RUN_ID==MAX_RUN:
+            time.sleep(1800)
+            for i in range(1,MAX_RUN+1):
+                if i==1: 
+                    df = pd.read_pickle(f'./labeled_echo_data/run_{i}.pkl')
+                    continue
+                df_temp = pd.read_pickle(f'./labeled_echo_data/run_{i}.pkl')
+                df = pd.concat([df, df_temp], ignore_index=True)
+            # remove the run_# files
+            for i in range(1,MAX_RUN+1): os.remove(f'./labeled_echo_data/run_{i}.pkl')
+            df.to_pickle(f'./labeled_echo_data/run_ApproachProb_{APPROACH_LIKELIHOOD}_{DATE}.pkl')
 
-    # Print out completion message
-    print('Collection completed')
-        
+        # Print out completion message
+        print('Collection completed')
+
+    return None
+
+if __name__ == '__main__':
+    main()
