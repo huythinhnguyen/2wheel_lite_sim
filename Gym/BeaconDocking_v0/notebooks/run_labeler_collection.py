@@ -34,7 +34,7 @@ COMPRESSED_SIZE = len(sensorconfig.COMPRESSED_DISTANCE_ENCODING)
 MAX_RUN = 4
 # get today date dot separated format MM.DD.YY
 DATE = time.strftime("%m.%d.%y")
-DOCKING_ZONE_CLASSIFIER_PATH = 'dockingZone_classifier_macOS.joblib'
+DOCKING_ZONE_CLASSIFIER_PATH = 'dockingZone_classifier.joblib'
 N_LAST_STEPS = 300
 SAFE_STEPS = 30
 
