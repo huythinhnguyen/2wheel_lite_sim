@@ -28,13 +28,13 @@ MARGIN = 1.5
 JITTER_LEVEL = 2
 DISTANCE_TO_CRASH = 0.6
 TIME_LIMIT = 5_000
-NUMBER_OF_EPISODES = 3
+NUMBER_OF_EPISODES = 1_000
 COMPRESSED_SIZE = len(sensorconfig.COMPRESSED_DISTANCE_ENCODING)
 #RAW_SIZE = len(sensorconfig.DISTANCE_ENCODING)
 MAX_RUN = 4
 # get today date dot separated format MM.DD.YY
 DATE = time.strftime("%m.%d.%y")
-DOCKING_ZONE_CLASSIFIER_PATH = '../dockingZone_classifier_macOS.joblib'
+DOCKING_ZONE_CLASSIFIER_PATH = 'dockingZone_classifier_macOS.joblib'
 N_LAST_STEPS = 300
 SAFE_STEPS = 30
 
@@ -61,13 +61,12 @@ def run_1_primer_episode(time_limit=TIME_LIMIT):
         docked = Helper.dockingCheck(pose, beacons=beacons)
         if docked:
             result = 'docked'
-            _,_,_ = poses.pop(), compresses.pop()
+            _,_ = poses.pop(), compresses.pop()
             break
         inview = render.cache['inview']
         if Helper.collision_check(inview, 'plant') or Helper.collision_check(inview, 'pole'):
             result = 'hit'
-            print('HIT')
-            _,_,_ = poses.pop(), compresses.pop()
+            _,_ = poses.pop(), compresses.pop()
             break
         action, zone = Helper.behavior(pose, beacons=beacons, classifier=cls)
         zones.append(zone)
@@ -141,8 +140,6 @@ def replay(beacons, objects, poses, compresses, actions, kine_caches, dist2crash
                 if i==N_replay:
                     current_dist2crash = np.linalg.norm(pose[:2]-crashsite[:2])
                     if current_dist2crash < dist2crash: N_replay += SAFE_STEPS
-            
-            if result=='out': print('OUT')
             if N==(abs(kth)-1):
                 if result=='hit': break
                 else: continue
@@ -169,7 +166,7 @@ def compile_data_into_array(beacons, objects, poses, compresses, zones, actions,
 
     if type(beacons) is not np.ndarray: beacons = np.array(beacons).reshape(-1,3)
     if type(objects) is not np.ndarray: objects = np.array(objects).reshape(-1,3)
-    poses = np.asarray(poses).rehape(-1,3)
+    poses = np.asarray(poses).reshape(-1,3)
     if len(poses)>nsteps: poses = poses[-nsteps:]
     # compresses is a list of dictionaries with keys 'left' and 'right'
     # convert compresses into a list of numpy array which is concatenated from the 1-D array from 'left' and 'right'
@@ -213,7 +210,9 @@ def main():
         vs_ls.append(vs)
         omegas_ls.append(omegas)
         
-        if episode%500==0 and episode!=0:
+        print('Episode {}/{} >> result: {}'.format(episode, NUMBER_OF_EPISODES, result))
+
+        if episode%200==0 and episode!=0:
             df = pd.DataFrame({'beacons': beacons_ls,
                                 'objects': objects_ls,
                                 'poses': poses_ls,
@@ -225,20 +224,20 @@ def main():
             if not os.path.exists('labeled_echo_data'): os.makedirs('labeled_echo_data')
             df.to_pickle(f'./labeled_echo_data/run_{RUN_ID}.pkl')
 
-        if RUN_ID==MAX_RUN:
-            time.sleep(1800)
-            for i in range(1,MAX_RUN+1):
-                if i==1: 
-                    df = pd.read_pickle(f'./labeled_echo_data/run_{i}.pkl')
-                    continue
-                df_temp = pd.read_pickle(f'./labeled_echo_data/run_{i}.pkl')
-                df = pd.concat([df, df_temp], ignore_index=True)
-            # remove the run_# files
-            for i in range(1,MAX_RUN+1): os.remove(f'./labeled_echo_data/run_{i}.pkl')
-            df.to_pickle(f'./labeled_echo_data/run_ApproachProb_{APPROACH_LIKELIHOOD}_{DATE}.pkl')
+    if RUN_ID==MAX_RUN:
+        time.sleep(1800)
+        for i in range(1,MAX_RUN+1):
+            if i==1: 
+                df = pd.read_pickle(f'./labeled_echo_data/run_{i}.pkl')
+                continue
+            df_temp = pd.read_pickle(f'./labeled_echo_data/run_{i}.pkl')
+            df = pd.concat([df, df_temp], ignore_index=True)
+        # remove the run_# files
+        for i in range(1,MAX_RUN+1): os.remove(f'./labeled_echo_data/run_{i}.pkl')
+        df.to_pickle(f'./labeled_echo_data/run_ApproachProb_{APPROACH_LIKELIHOOD}_{DATE}.pkl')
 
-        # Print out completion message
-        print('Collection completed')
+    # Print out completion message
+    print('Collection completed')
 
     return None
 
