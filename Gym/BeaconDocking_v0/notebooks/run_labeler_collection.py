@@ -26,17 +26,17 @@ RUN_ID = int(input('Enter Run ID = '))
 APPROACH_LIKELIHOOD = float(input('Enter Approach Likelihood (0.0-1.0) = '))
 MARGIN = 1.5
 JITTER_LEVEL = 2
-DISTANCE_TO_CRASH = 0.6
+DISTANCE_TO_CRASH = 0.8
 TIME_LIMIT = 5_000
-NUMBER_OF_EPISODES = 1_000
+NUMBER_OF_EPISODES = 750
 COMPRESSED_SIZE = len(sensorconfig.COMPRESSED_DISTANCE_ENCODING)
 #RAW_SIZE = len(sensorconfig.DISTANCE_ENCODING)
 MAX_RUN = 4
 # get today date dot separated format MM.DD.YY
 DATE = time.strftime("%m.%d.%y")
 DOCKING_ZONE_CLASSIFIER_PATH = 'dockingZone_classifier.joblib'
-N_LAST_STEPS = 300
-SAFE_STEPS = 30
+N_LAST_STEPS = 500
+SAFE_STEPS = 50
 
 
 def run_1_primer_episode(time_limit=TIME_LIMIT):
