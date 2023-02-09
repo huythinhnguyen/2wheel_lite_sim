@@ -14,7 +14,7 @@ from Sensors.BatEcho import Setting as sensorconfig
 from Gym.BeaconDocking_v0 import Helper
 from Arena import Builder
 
-from Control.SensorimotorLoops.BatEcho import AvoidApproach, Avoid
+from Control.SensorimotorLoops.BatEcho import AvoidApproach
 from Simulation.Motion import State
 from Control.SensorimotorLoops import Setting as controlconfig
 
