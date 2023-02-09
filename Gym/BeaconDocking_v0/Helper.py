@@ -238,3 +238,18 @@ def behavior(pose, beacons, classifier, avoid_overwrite_func=avoid_overwrite,
         if dockingZone_indicator == 1: return 0., dockingZone_indicator
     if np.random.rand() < approach_likelihood: return 1., dockingZone_indicator
     else: return 0., dockingZone_indicator
+
+
+def behaviorCruise(pose, beacons, classifier, avoid_overwrite_func=avoid_overwrite, 
+            sort_beacons_by_distance_func=sort_beacons_by_distance, 
+            beacon_centric_pose_convert_func=beacon_centric_pose_converter, margin=2, scan_range=5):
+    if avoid_overwrite_func(pose, margin=margin):
+        return 0., 3
+    sorted_beacons, sorted_distances = sort_beacons_by_distance_func(pose, beacons)
+    for beacon, dist in zip(sorted_beacons, sorted_distances):
+        if dist > scan_range: continue
+        beacon_centric_pose = beacon_centric_pose_convert_func(pose, beacon)
+        dockingZone_indicator = classifier.predict(beacon_centric_pose.reshape(1,3))[0]
+        if dockingZone_indicator == 0: return 1., dockingZone_indicator
+        if dockingZone_indicator == 1: return 0., dockingZone_indicator
+    return 2, dockingZone_indicator
