@@ -281,6 +281,9 @@ class AvoidApproach(Avoid):
     def _calc_turning_radius(self, iid, v, onset_distance):
         R_min = np.power(v,2) / self.centri_accel
         A = self.approach_factor
+        if A == 2: 
+            iid = self.IID_QUIET_RAND * np.random.rand() - 0.5*self.IID_QUIET_RAND
+            A = 1
         scaled_IID = iid / self.steer_damper
         scaled_IID = np.sign(iid) if np.abs(scaled_IID)>1 else scaled_IID
         approach_term = -np.sign(iid)*(np.log(np.abs(scaled_IID))-R_min) if scaled_IID!= 0 else sys.float_info.max
@@ -295,29 +298,53 @@ class AvoidApproach(Avoid):
         
         return A*approach_term + (1-A)*avoid_term
 
+class AvoidApproachCruise(Avoid):
+    def __init__(self, background=None, **kwargs):
+        super().__init__(background)
+        self.steer_damper = config.APPROACH_STEER_DAMPING
+        self.approach_factor = 0 if 'approach_factor' not in kwargs.keys() else kwargs['approach_factor']
 
-"""
-    def _approach_A(self, v, iid):
-        return self.max_angular_acceleration * iid / self.steer_damper
 
-    def _approach_B(self, v, iid):
+    def get_kinematic(self, input_echoes, approach_factor=None):
+        if approach_factor is not None: self.approach_factor = approach_factor
+        cues = self.get_cues(input_echoes)
+        v = self._get_linear_velocity(cues)
+        omega = self._get_angular_velocity(cues, v=v)
+        self.kine_cache.update({'v': v, 'omega': omega})
+        return v, omega
+
+
+    def _get_angular_velocity(self, cues,v=None):
+        iid = cues['IID']
+        if v is None:
+            v = self._get_linear_velocity(cues)
+        turning_radius = self._calc_turning_radius(iid, v, cues['onset_distance'])
+        omega = self._calc_angular_velocity(v, turning_radius)
+        if np.abs(omega) > self.max_angular_velocity:
+            omega = np.sign(omega)*self.max_angular_velocity
+        return self._angular_accel_cap(omega)
+    
+
+    def _calc_angular_velocity(self, v, R):
+        if R!=0: return v/R
+        else: return config.MAX_ANGULAR_VELOCITY
+
+    
+    def _calc_turning_radius(self, iid, v, onset_distance):
         R_min = np.power(v,2) / self.centri_accel
-        temp = iid/self.steer_damper * np.pi
-        temp = np.pi/2 if temp>np.pi/2 else -np.pi/2 if temp<-np.pi/2 else temp
-        if temp==0:
-            return 0.
-        else:
-            R_select = 1/np.tan(temp)+np.sign(iid)*R_min
-            return v/R_select
+        A = self.approach_factor
 
-    def _avoid_A(self, v, iid):
-        R_min = np.power(v,2) / self.centri_accel
-        omega = -np.sign(iid) * (v/R_min)
-        return omega
+        scaled_IID = iid / self.steer_damper
+        scaled_IID = np.sign(iid) if np.abs(scaled_IID)>1 else scaled_IID
+        approach_term = -np.sign(iid)*(np.log(np.abs(scaled_IID))-R_min) if scaled_IID!= 0 else sys.float_info.max
+        scaled_onset = (onset_distance)/np.max(Setting.COMPRESSED_DISTANCE_ENCODING)
+        scaled_onset = 1 if scaled_onset>1 else scaled_onset
+        avoid_term = -np.sign(iid)*(R_min - np.log(1-scaled_onset)) if scaled_onset<1 else sys.float_info.max
+        if onset_distance < self.B*self.body_radius:
+            avoid_term = np.sign(self.kine_cache['omega'])*np.abs(avoid_term)
 
-    def _avoid_B(self, v, iid, onset_distance):
-        R_min = np.power(v,2) / self.centri_accel
-        w = (v/R_min) * np.exp(-1*(onset_distance-self.body_radius))
-        omega = -np.sign(iid) * w if onset_distance > self.B*self.body_radius else np.sign(self.kine_cache['omega'])*w
-        return omega
-"""
+        #self.cache['approach_term'] = approach_term
+        #self.cache['avoid_term'] = avoid_term
+        
+        return A*approach_term + (1-A)*avoid_term
+
