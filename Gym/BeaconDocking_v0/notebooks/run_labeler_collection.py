@@ -26,18 +26,18 @@ RUN_ID = int(input('Enter Run ID = '))
 APPROACH_LIKELIHOOD = float(input('Enter Approach Likelihood (0.0-1.0) = '))
 MARGIN = 1.5
 JITTER_LEVEL = 2
-DISTANCE_TO_CRASH = 0.8
+DISTANCE_TO_CRASH = 1.0
 TIME_LIMIT = 5_000
-NUMBER_OF_EPISODES = 750
+NUMBER_OF_EPISODES = 2000
 COMPRESSED_SIZE = len(sensorconfig.COMPRESSED_DISTANCE_ENCODING)
 #RAW_SIZE = len(sensorconfig.DISTANCE_ENCODING)
-MAX_RUN = 4
+MAX_RUN = 3
 # get today date dot separated format MM.DD.YY
 DATE = time.strftime("%m.%d.%y")
 DOCKING_ZONE_CLASSIFIER_PATH = 'dockingZone_classifier.joblib'
-N_LAST_STEPS = 500
-SAFE_STEPS = 50
-
+N_LAST_STEPS = 400
+SAFE_STEPS = 40
+SCAN_RANGE=6
 
 def run_1_primer_episode(time_limit=TIME_LIMIT):
     # initialize the episode
@@ -68,7 +68,8 @@ def run_1_primer_episode(time_limit=TIME_LIMIT):
             result = 'hit'
             _,_ = poses.pop(), compresses.pop()
             break
-        action, zone = Helper.behavior(pose, beacons=beacons, classifier=cls)
+        action, zone = Helper.behavior(pose, beacons=beacons, classifier=cls,
+                                       approach_likelihood=APPROACH_LIKELIHOOD, margin=MARGIN, scan_range=SCAN_RANGE)
         zones.append(zone)
         actions.append(action)
         kine_caches.append(controller.kine_cache)
@@ -125,7 +126,8 @@ def replay(beacons, objects, poses, compresses, actions, kine_caches, dist2crash
                     _,_ = replay_poses.pop(), replay_compresses.pop()
                     break
                 if i<N: action, zone=0,-1
-                else: action, zone = Helper.behavior(pose, beacons=beacons, classifier=cls)
+                else: action, zone = Helper.behavior(pose, beacons=beacons, classifier=cls,
+                                       approach_likelihood=APPROACH_LIKELIHOOD, margin=MARGIN, scan_range=SCAN_RANGE)
 
                 replay_zones.append(zone)
                 replay_actions.append(action)
