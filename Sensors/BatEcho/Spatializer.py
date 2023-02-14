@@ -125,7 +125,7 @@ class Retriever:
         ref_start_indexes, ref_end_indexes, start_indexes, end_indexes = self._get_ref_indexes(distances, mode='pole')
         mask = np.zeros((len(distances),self.raw_length))
         attenuations = self._attenuation(ref_start_indexes, ref_end_indexes, start_indexes, end_indexes)
-        for i, (s, e, attn) in enumerate(zip(ref_start_indexes, ref_end_indexes, attenuations)):
+        for i, (s, e, attn) in enumerate(zip(start_indexes, end_indexes, attenuations)):
             mask[i][s:e] = attn
         return mask
 
@@ -134,7 +134,7 @@ class Retriever:
         ref_start_indexes, ref_end_indexes, start_indexes, end_indexes = self._get_ref_indexes(distances, mode='plant')
         mask = np.zeros((len(distances),self.raw_length))
         attenuations = self._attenuation(ref_start_indexes, ref_end_indexes, start_indexes, end_indexes)
-        for i, (s, e, attn) in enumerate(zip(ref_start_indexes, ref_end_indexes, attenuations)):
+        for i, (s, e, attn) in enumerate(zip(start_indexes, end_indexes, attenuations)):
             mask[i][s:e] = attn
         return mask
 
