@@ -281,9 +281,7 @@ class AvoidApproach(Avoid):
     def _calc_turning_radius(self, iid, v, onset_distance):
         R_min = np.power(v,2) / self.centri_accel
         A = self.approach_factor
-        if A == 2: 
-            iid = self.IID_QUIET_RAND * np.random.rand() - 0.5*self.IID_QUIET_RAND
-            A = 1
+
         scaled_IID = iid / self.steer_damper
         scaled_IID = np.sign(iid) if np.abs(scaled_IID)>1 else scaled_IID
         approach_term = -np.sign(iid)*(np.log(np.abs(scaled_IID))-R_min) if scaled_IID!= 0 else sys.float_info.max
@@ -331,9 +329,13 @@ class AvoidApproachCruise(Avoid):
 
     
     def _calc_turning_radius(self, iid, v, onset_distance):
+        
+
         R_min = np.power(v,2) / self.centri_accel
         A = self.approach_factor
-
+        if A == 2: 
+            iid = self.IID_QUIET_RAND * np.random.rand() - 0.5*self.IID_QUIET_RAND
+            A = 1
         scaled_IID = iid / self.steer_damper
         scaled_IID = np.sign(iid) if np.abs(scaled_IID)>1 else scaled_IID
         approach_term = -np.sign(iid)*(np.log(np.abs(scaled_IID))-R_min) if scaled_IID!= 0 else sys.float_info.max
