@@ -191,7 +191,14 @@ def initializer(number_of_positions=9, number_of_poses=4, jit=0): # INIT 9 or 4 
     return bat_pose, beacons
 
 
-def avoid_overwrite(pose, maze_size=MAZE_SIZE, margin=2):
+def close_to_wall(pose, maze_size=MAZE_SIZE, margin=1.5):
+    x, y = pose[:2]
+    t = 0.5*maze_size - margin
+    if (x>t) or (y>t) or (x<-t) or (y<-t): return True
+    return False
+
+
+def avoid_overwrite(pose, maze_size=MAZE_SIZE, margin=1.25):
     x, y, yaw = pose[:3]
     t = 0.5*maze_size - margin
     # East wall:
@@ -205,12 +212,18 @@ def avoid_overwrite(pose, maze_size=MAZE_SIZE, margin=2):
     return False
 
 
+def sort_beacons_by_azimuth(pose, beacons):
+    azimuths = Builder.wrap2pi(np.arctan2(beacons[:,1] - pose[1], beacons[:,0] - pose[0]) - pose[2])
+    # sort by absolute azimuth
+    return beacons[np.argsort(np.abs(azimuths))], azimuths[np.argsort(np.abs(azimuths))]
+
+
 def sort_beacons_by_distance(pose, beacons):
     x_sq = np.power(beacons[:,0] - pose[0],2)
     y_sq = np.power(beacons[:,1] - pose[1],2)
     distance_squared = x_sq + y_sq
-    sorted_beacons = beacons[np.argsort(distance_squared)]
-    return sorted_beacons, np.sqrt(distance_squared)
+    return beacons[np.argsort(distance_squared)], np.sqrt(distance_squared[np.argsort(distance_squared)])
+
 
 def beacon_centric_pose_converter(pose, beacon):
     p = np.copy(pose).reshape(1,3)
@@ -222,6 +235,83 @@ def beacon_centric_pose_converter(pose, beacon):
     p[:,:2] = np.matmul(rotmat, p[:,:2].T).T
     p[:,2] = Builder.wrap2pi(p[:,2] + theta)
     return p
+
+### Docking Zone encoding:
+#   0: classifier said you will dock if you approach the beacon
+#   1: classifier said you will hit if you approach the beacon
+#   2: classifier said you will miss the beacon if you approach
+#   3: you are too close to the wall, avoid anyway
+#   4: there is no beacon in scan field, go straight
+def new_behavior(pose, beacons, classifier, avoid_overwrite_func=avoid_overwrite,
+                sort_beacons_by_distance_func=sort_beacons_by_distance,
+                sort_beacons_by_azimuth_func = sort_beacons_by_azimuth,
+                beacon_centric_pose_convert_func = beacon_centric_pose_converter,
+                margin=1.25, scan_range=3.5, scan_azimuth =np.pi/3, too_close_to_run=0.75,
+                approach_likelihood=0.0):
+    if avoid_overwrite_func(pose=pose, margin=margin): return 0, 3
+    sorted_beacons, sorted_distance = sort_beacons_by_distance_func(pose, beacons)
+    # eliminate elements in sorted_beacons that has sorted_distance > scan_range
+    sorted_beacons = sorted_beacons[sorted_distance <= scan_range]
+
+    sorted_beacons, sorted_azimuths = sort_beacons_by_azimuth_func(pose, sorted_beacons)
+    # eliminate elements in sorted_beacons that has sorted_azimuths > scan_azimuth
+    sorted_beacons = sorted_beacons[np.abs(sorted_azimuths) <= scan_azimuth]
+
+    if len(sorted_beacons)<1: return (1, 4) if np.random.rand() < approach_likelihood else (0, 4)
+    beacon = sorted_beacons[0]
+    beacon_centric_pose = beacon_centric_pose_convert_func(pose, beacon)
+    dockingZone_indicator = int(classifier.predict(beacon_centric_pose.reshape(1,-1))[0])
+    if dockingZone_indicator == 1:
+        # calculate the euclidean distance between pose and beacon
+        distance = np.sqrt(np.power(pose[0] - beacon[0], 2) + np.power(pose[1] - beacon[1], 2))
+        if distance < too_close_to_run or close_to_wall(pose, margin=margin+0.25): return 0, dockingZone_indicator
+        else: return 1, dockingZone_indicator
+    elif dockingZone_indicator == 0: return 1, dockingZone_indicator
+    if close_to_wall(pose, margin=margin+0.25): 
+        return 0, dockingZone_indicator
+    return 1, dockingZone_indicator
+
+
+### Docking Zone encoding:
+#   0: classifier said you will dock if you approach the beacon
+#   1: classifier said you will hit if you approach the beacon
+#   2: classifier said you will miss the beacon if you approach
+#   3: you are too close to the wall, avoid anyway
+#   4: there is no beacon in scan field, go straight
+def new_behavior_Cruise(pose, beacons, classifier, avoid_overwrite_func=avoid_overwrite,
+                        sort_beacons_by_distance_func=sort_beacons_by_distance,
+                        sort_beacons_by_azimuth_func = sort_beacons_by_azimuth,
+                        beacon_centric_pose_convert_func = beacon_centric_pose_converter,
+                        margin=1.25, scan_range=3.5, scan_azimuth =np.pi/3, too_close_to_run=0.75):
+    if avoid_overwrite_func(pose=pose, margin=margin): return 0, 3
+    sorted_beacons, sorted_distance = sort_beacons_by_distance_func(pose, beacons)
+    # eliminate elements in sorted_beacons that has sorted_distance > scan_range
+    sorted_beacons = sorted_beacons[sorted_distance <= scan_range]
+
+    sorted_beacons, sorted_azimuths = sort_beacons_by_azimuth_func(pose, sorted_beacons)
+    # eliminate elements in sorted_beacons that has sorted_azimuths > scan_azimuth
+    sorted_beacons = sorted_beacons[np.abs(sorted_azimuths) <= scan_azimuth]
+    
+    if len(sorted_beacons)<1: return 2, 4
+    beacon = sorted_beacons[0]
+    beacon_centric_pose = beacon_centric_pose_convert_func(pose, beacon)
+    dockingZone_indicator = int(classifier.predict(beacon_centric_pose.reshape(1,-1))[0])
+    if dockingZone_indicator == 1:
+        # calculate the euclidean distance between pose and beacon
+        distance = np.sqrt(np.power(pose[0] - beacon[0], 2) + np.power(pose[1] - beacon[1], 2))
+        if distance < too_close_to_run or close_to_wall(pose, margin=margin+0.25): return 0, dockingZone_indicator
+        else: return 1, dockingZone_indicator
+    elif dockingZone_indicator == 0: return 1, dockingZone_indicator
+    if close_to_wall(pose, margin=margin+0.25): 
+        return 0, dockingZone_indicator
+    if close_to_wall(pose, margin=margin+0.5): 
+        return 2, dockingZone_indicator
+    return 1, dockingZone_indicator
+
+
+
+### OBSOLETED BEHAVIOR FUNCTIONS ###
+"""
 
 def behavior(pose, beacons, classifier, avoid_overwrite_func=avoid_overwrite, 
             sort_beacons_by_distance_func=sort_beacons_by_distance, 
@@ -253,3 +343,5 @@ def behaviorCruise(pose, beacons, classifier, avoid_overwrite_func=avoid_overwri
         if dockingZone_indicator == 0: return 1., dockingZone_indicator
         if dockingZone_indicator == 1: return 0., dockingZone_indicator
     return 2, dockingZone_indicator
+
+"""
