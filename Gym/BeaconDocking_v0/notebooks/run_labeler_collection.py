@@ -14,7 +14,7 @@ from Sensors.BatEcho import Setting as sensorconfig
 from Gym.BeaconDocking_v0 import Helper
 from Arena import Builder
 
-from Control.SensorimotorLoops.BatEcho import AvoidApproach
+from Control.SensorimotorLoops.BatEcho import AvoidApproachCruise
 from Simulation.Motion import State
 from Control.SensorimotorLoops import Setting as controlconfig
 
@@ -23,26 +23,34 @@ from Gym.BeaconDocking_v0 import ConfigOverwite
 ConfigOverwite.overwrite_config(controlconfig, sensorconfig)
 
 RUN_ID = int(input('Enter Run ID = '))
-APPROACH_LIKELIHOOD = float(input('Enter Approach Likelihood (0.0-1.0) = '))
-MARGIN = 1.5
+ZONE_CLASSIFIER = input('Enter Zone Classifier (SVM/MLP)= ')
+ZONE_CLASSIFIER_PATH = f'dockingZone_classifier_{ZONE_CLASSIFIER}.joblib'
+CRUISE_MODE = input('Do you want to use Cruise Mode? (y/n) = ')
+if CRUISE_MODE == 'y' or CRUISE_MODE == 'Y': BEHAVIOR_FUNC = Helper.new_behavior_Cruise
+elif CRUISE_MODE == 'n' or CRUISE_MODE == 'N': BEHAVIOR_FUNC = Helper.new_behavior
+else: raise ValueError('Invalid Input')
+CRUISE_TXT = 'Cruise' if CRUISE_MODE == 'y' or CRUISE_MODE == 'Y' else 'NoCruise'
+MARGIN = 1.25
 JITTER_LEVEL = 2
 DISTANCE_TO_CRASH = 1.0
-TIME_LIMIT = 5_000
+TIME_LIMIT = 3_000
 NUMBER_OF_EPISODES = 2000
 COMPRESSED_SIZE = len(sensorconfig.COMPRESSED_DISTANCE_ENCODING)
 #RAW_SIZE = len(sensorconfig.DISTANCE_ENCODING)
 MAX_RUN = 3
 # get today date dot separated format MM.DD.YY
 DATE = time.strftime("%m.%d.%y")
-DOCKING_ZONE_CLASSIFIER_PATH = 'dockingZone_classifier.joblib'
-N_LAST_STEPS = 400
+N_LAST_STEPS = 500
 SAFE_STEPS = 40
-SCAN_RANGE=6
+SCAN_RANGE=3.5
+SCAN_AZIMUTH=np.pi/3
+TOO_CLOSE_TO_RUN = 0.75 # meters
 
-def run_1_primer_episode(time_limit=TIME_LIMIT):
+
+def run_1_primer_episode(time_limit=TIME_LIMIT, cls_path=ZONE_CLASSIFIER_PATH, behavior_func=BEHAVIOR_FUNC):
     # initialize the episode
     obstacles = Helper.box_builder('')
-    cls = load(DOCKING_ZONE_CLASSIFIER_PATH)
+    cls = load(cls_path)
     init_pose, beacons = Helper.initializer(jit=JITTER_LEVEL)
     objects = Helper.concatenate_beacons(beacon_objs=Helper.beacons2objects(beacons), objects=obstacles)
     # initialize data containers
@@ -51,7 +59,7 @@ def run_1_primer_episode(time_limit=TIME_LIMIT):
     pose = np.copy(init_pose)
     render = Render()
     state = State(pose=np.copy(pose), dt=1/controlconfig.CHIRP_RATE)
-    controller = AvoidApproach()
+    controller = AvoidApproachCruise()
     result='out'
 
     for _ in range(time_limit):
@@ -68,8 +76,7 @@ def run_1_primer_episode(time_limit=TIME_LIMIT):
             result = 'hit'
             _,_ = poses.pop(), compresses.pop()
             break
-        action, zone = Helper.behavior(pose, beacons=beacons, classifier=cls,
-                                       approach_likelihood=APPROACH_LIKELIHOOD, margin=MARGIN, scan_range=SCAN_RANGE)
+        action, zone = behavior_func(pose, beacons=beacons, classifier=cls, margin=MARGIN, scan_range=SCAN_RANGE, scan_azimuth=SCAN_AZIMUTH, too_close_to_run=TOO_CLOSE_TO_RUN)
         zones.append(zone)
         actions.append(action)
         kine_caches.append(controller.kine_cache)
@@ -79,10 +86,14 @@ def run_1_primer_episode(time_limit=TIME_LIMIT):
         state.update_kinematic(kinematic=[v, omega])
         state.update_pose()
         pose = np.copy(state.pose)
-    return result, beacons, objects, poses, compresses, zones, actions, kine_caches, vs, omegas
+        if result=='hit' and Helper.close_to_corner(pose, margin=1): corner = 1
+        else: corner = 0
+    return result, beacons, objects, poses, compresses, zones, actions, kine_caches, vs, omegas, corner
+# corner is to check whether this bat got stuck in the corner
+# maybe emphasizing learning from corner epiosode can help improving these cases
 
 
-def replay(beacons, objects, poses, compresses, actions, kine_caches, dist2crash=DISTANCE_TO_CRASH):
+def replay(beacons, objects, poses, compresses, actions, kine_caches, dist2crash=DISTANCE_TO_CRASH, cls_path=ZONE_CLASSIFIER_PATH, behavior_func=BEHAVIOR_FUNC):
     result = 'hit'
     crashsite = poses[-1]
     kth = 0
@@ -93,13 +104,13 @@ def replay(beacons, objects, poses, compresses, actions, kine_caches, dist2crash
             replay_poses, replay_compresses = [poses[kth]], [compresses[kth]]
             replay_zones, replay_actions = [-1], [0]
             replay_kine_caches, replay_vs, replay_omegas = [kine_caches[kth]], [], []
-            cls = load(DOCKING_ZONE_CLASSIFIER_PATH)
+            cls = load(cls_path)
 
             # take the very first step (the course correction step)
             pose = np.copy(replay_poses[0])
             render = Render()
             state = State(pose=np.copy(pose), dt=1/controlconfig.CHIRP_RATE)
-            controller = AvoidApproach()
+            controller = AvoidApproachCruise()
             controller.kine_cache.update(replay_kine_caches[0])
             result='out'
             action = replay_actions[0]
@@ -126,8 +137,8 @@ def replay(beacons, objects, poses, compresses, actions, kine_caches, dist2crash
                     _,_ = replay_poses.pop(), replay_compresses.pop()
                     break
                 if i<N: action, zone=0,-1
-                else: action, zone = Helper.behavior(pose, beacons=beacons, classifier=cls,
-                                       approach_likelihood=APPROACH_LIKELIHOOD, margin=MARGIN, scan_range=SCAN_RANGE)
+                else: action, zone = behavior_func(pose, beacons=beacons, classifier=cls, margin=MARGIN, 
+                                                   scan_range=SCAN_RANGE, scan_azimuth=SCAN_AZIMUTH, too_close_to_run=TOO_CLOSE_TO_RUN)
 
                 replay_zones.append(zone)
                 replay_actions.append(action)
@@ -189,10 +200,10 @@ def compile_data_into_array(beacons, objects, poses, compresses, zones, actions,
 
 
 def main():
-    beacons_ls, objects_ls, poses_ls, compresses_ls, zones_ls, actions_ls, vs_ls, omegas_ls = [], [], [], [], [], [], [], []
+    beacons_ls, objects_ls, poses_ls, compresses_ls, zones_ls, actions_ls, vs_ls, omegas_ls, corners = [], [], [], [], [], [], [], [], []
     episode = 0
     while episode < NUMBER_OF_EPISODES:
-        result, beacons, objects, poses, compresses, zones, actions, kine_caches, vs, omegas = run_1_primer_episode()
+        result, beacons, objects, poses, compresses, zones, actions, kine_caches, vs, omegas, corner = run_1_primer_episode()
         if result=='out': continue
         if result=='hit':
             kth, N, replay_poses, replay_compresses, replay_zones, replay_actions, replay_kine_caches, replay_vs, replay_omegas = replay(
@@ -211,6 +222,7 @@ def main():
         actions_ls.append(actions)
         vs_ls.append(vs)
         omegas_ls.append(omegas)
+        corners.append(corner)
         
         print('Episode {}/{} >> result: {}'.format(episode, NUMBER_OF_EPISODES, result))
 
@@ -222,21 +234,22 @@ def main():
                                 'zones': zones_ls,
                                 'actions': actions_ls,
                                 'vs': vs_ls,
-                                'omegas': omegas_ls})
+                                'omegas': omegas_ls,
+                                'corners': corners})
             if not os.path.exists('labeled_echo_data'): os.makedirs('labeled_echo_data')
-            df.to_pickle(f'./labeled_echo_data/run_{RUN_ID}.pkl')
+            df.to_pickle(f'./labeled_echo_data/run_{CRUISE_TXT}_{ZONE_CLASSIFIER}_{RUN_ID}.pkl')
 
     if RUN_ID==MAX_RUN:
         time.sleep(1800)
         for i in range(1,MAX_RUN+1):
             if i==1: 
-                df = pd.read_pickle(f'./labeled_echo_data/run_{i}.pkl')
+                df = pd.read_pickle(f'./labeled_echo_data/run_{CRUISE_TXT}_{ZONE_CLASSIFIER}_{i}.pkl')
                 continue
-            df_temp = pd.read_pickle(f'./labeled_echo_data/run_{i}.pkl')
+            df_temp = pd.read_pickle(f'./labeled_echo_data/run_{CRUISE_TXT}_{ZONE_CLASSIFIER}_{i}.pkl')
             df = pd.concat([df, df_temp], ignore_index=True)
         # remove the run_# files
         for i in range(1,MAX_RUN+1): os.remove(f'./labeled_echo_data/run_{i}.pkl')
-        df.to_pickle(f'./labeled_echo_data/run_ApproachProb_{APPROACH_LIKELIHOOD}_{DATE}.pkl')
+        df.to_pickle(f'./labeled_echo_data/run_ApproachProb_{CRUISE_TXT}_{ZONE_CLASSIFIER}_{DATE}.pkl')
 
     # Print out completion message
     print('Collection completed')
