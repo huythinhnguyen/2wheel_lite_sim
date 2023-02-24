@@ -191,6 +191,16 @@ def initializer(number_of_positions=9, number_of_poses=4, jit=0): # INIT 9 or 4 
     return bat_pose, beacons
 
 
+def close_to_corner(pose, maze_size=MAZE_SIZE, margin=1):
+    x, y = pose[:2]
+    t = 0.5*maze_size - margin
+    if (x>t) and (y>t): return True
+    if (x>t) and (y<-t): return True
+    if (x<-t) and (y>t): return True
+    if (x<-t) and (y<-t): return True
+    return False
+
+
 def close_to_wall(pose, maze_size=MAZE_SIZE, margin=1.5):
     x, y = pose[:2]
     t = 0.5*maze_size - margin
