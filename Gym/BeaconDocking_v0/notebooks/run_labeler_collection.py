@@ -248,7 +248,7 @@ def main():
             df_temp = pd.read_pickle(f'./labeled_echo_data/run_{CRUISE_TXT}_{ZONE_CLASSIFIER}_{i}.pkl')
             df = pd.concat([df, df_temp], ignore_index=True)
         # remove the run_# files
-        for i in range(1,MAX_RUN+1): os.remove(f'./labeled_echo_data/run_{i}.pkl')
+        for i in range(1,MAX_RUN+1): os.remove(f'./labeled_echo_data/run_{CRUISE_TXT}_{ZONE_CLASSIFIER}_{i}.pkl')
         df.to_pickle(f'./labeled_echo_data/run_ApproachProb_{CRUISE_TXT}_{ZONE_CLASSIFIER}_{DATE}.pkl')
 
     # Print out completion message
